@@ -1,0 +1,99 @@
+@startuml WarmHome_Containers
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Container.puml
+
+top to bottom direction
+
+' Layout improvements
+skinparam componentStyle rectangle
+skinparam roundcorner 20
+skinparam nodesep 80
+skinparam ranksep 100
+
+
+LAYOUT_WITH_LEGEND()
+
+Person(user, "Пользователь", "Владелец / Гость — управляет и наблюдает за домом")
+Person(partners, "Партнеры", "Партнеры — управление и поддержка оборудования")
+
+System_Boundary(s1,"WarmHome Ecosystem (SaaS)") {
+
+  ' =================== UI Containers ===================
+  Container(web_app, "Web App", "React (SPA)", "Интерфейс самообслуживания — настройка, мониторинг, сценарии")
+  Container(mobile_app, "Mobile App", "iOS / Android", "Мобильный интерфейс для управления и уведомлений")
+
+  ' =================== Monitoring Domain ===================
+  Container_Boundary(monitoring, "Monitoring System") {
+      Container(timeseries, "Timeseries Service", "Service", "Сбор телеметрии и метрик")
+      Container(timeseries_db, "Time-Series DB", "TSDB (e.g. InfluxDB)", "Хранение телеметрии и метрик")
+  }
+
+  ' =================== Device Management Domain ===================
+  Container_Boundary(devices, "Device Management System") {
+      Container(device, "Device Service", "Service", "Подключение, управление и профили устройств")
+      Container(device_db, "Device DB", "Relational DB", "Устройства и их профили")
+  }
+
+  ' =================== Automation Domain ===================
+  Container_Boundary(automations, "Automation System") {
+      Container(automation, "Automation Service", "Service", "Управление правилами и расписанием")
+      Container(automation_engine, "Automation Engine", "Rules engine", "Хранение и выполнение сценариев, обработка триггеров")
+      Container(automation_engine_db, "Automation Engine DB", "Rules engine DB", "Хранение пользовательских сценариев")
+      Container(scheduler, "Scheduler", "Cron-like Service", "Планирование сценариев и запуск по расписанию")
+  }
+
+  ' =================== Security Domain ===================
+  Container_Boundary(security, "Security System") {
+      Container(access_control, "Access / Gate Control Service", "Service", "Управление воротами/замками")
+      Container(event_log_db, "Event Log", "Service", "Журнал событий безопасности")
+      Container(auth_svc, "Auth Service", "OIDC / JWT", "Аутентификация и авторизация, ролевая модель")
+      Container(video_service, "Video / Camera Service", "WebRTC / RTSP", "Видеопоток")
+      Container(video_service_db, "VideoService DB", "Relational DB", "Записи видео наблюдения")
+  }
+
+  ' =================== Service Containers ===================
+  Container(api_gateway, "API Gateway", "GraphQL / REST", "Единая точка входа для UI и внешних интеграций")
+  Container(partner_portal, "Partner Portal", "Web Service", "Инструменты для партнёров и поддержка устройств")
+  Container(event_bus, "Event Bus / Queue", "Message Queue (Kafka/RabbitMQ)", "Асинхронная коммуникация между сервисами")
+}
+System_Ext(device_api, "Device API", "Внешнее API устройств")
+
+' =================== Внешние связи ===================
+Rel(user, web_app, "Просмотр параметров и управление")
+Rel(user, mobile_app, "Просмотр параметров и управление")
+Rel(partners, partner_portal, "Просмотр параметров и управление")
+
+Rel(web_app, api_gateway, "Запросы UI → API", "GraphQL/REST")
+Rel(mobile_app, api_gateway, "Запросы Mobile → API", "GraphQL/REST")
+
+Rel_D(api_gateway, auth_svc, "Проверка JWT / пользовательской информации")
+Rel_D(api_gateway, access_control, "API → Access Control")
+Rel(api_gateway, automation, "API → Automation Service")
+Rel_D(api_gateway, video_service, "API → Video Service")
+Rel_D(api_gateway, timeseries, "API → Timeseries Service")
+
+Rel(partner_portal, api_gateway, "Подключение партнерских устройств")
+
+' =================== Event Bus Communications ===================
+Rel(api_gateway, event_bus, "API → Device Service")
+Rel(automation_engine, event_bus, "Команды управления устройствами")
+Rel(event_bus, device, "Запросы к устройствам")
+Rel(timeseries, event_bus, "Телеметрия")
+
+' =================== Database Connections ===================
+Rel(timeseries, timeseries_db, "Хранение метрик")
+Rel_L(device, device_db, "Конфигурация устройств")
+Rel(auth_svc, event_log_db, "События доступа")
+Rel(access_control, event_log_db, "Событие безопасности")
+Rel_L(automation_engine, automation_engine_db, "Сценарии")
+Rel(video_service, video_service_db, "Сохранить видео")
+
+' =================== External Systems ===================
+Rel(device, device_api, "Взаимодействие с устройствами")
+
+' =================== Internal Domain Logic ===================
+Rel(automation, automation_engine, "Управление сценариями")
+Rel_L(automation, scheduler, "Планирование")
+Rel(scheduler, automation_engine, "Запуск по расписанию")
+
+@enduml
