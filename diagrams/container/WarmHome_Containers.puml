@@ -44,11 +44,11 @@ System_Boundary(s1,"WarmHome Ecosystem (SaaS)") {
 
   ' =================== Security Domain ===================
   Container_Boundary(security, "Security System") {
+      Container(video_service, "Video / Camera Service", "WebRTC / RTSP", "Видеопоток")
+      Container(video_service_db, "VideoService DB", "Relational DB", "Записи видео наблюдения")
       Container(access_control, "Access / Gate Control Service", "Service", "Управление воротами/замками")
       Container(event_log_db, "Event Log", "Service", "Журнал событий безопасности")
       Container(auth_svc, "Auth Service", "OIDC / JWT", "Аутентификация и авторизация, ролевая модель")
-      Container(video_service, "Video / Camera Service", "WebRTC / RTSP", "Видеопоток")
-      Container(video_service_db, "VideoService DB", "Relational DB", "Записи видео наблюдения")
   }
 
   ' =================== Service Containers ===================
@@ -57,6 +57,7 @@ System_Boundary(s1,"WarmHome Ecosystem (SaaS)") {
   Container(event_bus, "Event Bus / Queue", "Message Queue (Kafka/RabbitMQ)", "Асинхронная коммуникация между сервисами")
 }
 System_Ext(device_api, "Device API", "Внешнее API устройств")
+System_Ext(gate_api, "Gate API", "Внешнее API ворот")
 
 ' =================== Внешние связи ===================
 Rel(user, web_app, "Просмотр параметров и управление")
@@ -90,6 +91,7 @@ Rel(video_service, video_service_db, "Сохранить видео")
 
 ' =================== External Systems ===================
 Rel(device, device_api, "Взаимодействие с устройствами")
+Rel_D(access_control, gate_api, "Взаимодействие с воротами")
 
 ' =================== Internal Domain Logic ===================
 Rel(automation, automation_engine, "Управление сценариями")
