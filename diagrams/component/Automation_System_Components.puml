@@ -1,0 +1,62 @@
+@startuml Automation_System_Components
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+' Simple layout
+skinparam componentStyle rectangle
+skinparam roundcorner 15
+skinparam nodesep 60
+skinparam ranksep 80
+
+' Component diagram shows internal components of containers from WarmHome_Containers.puml
+Container_Boundary(automations_container, "Automation System", "Container", "Система автоматизации") {
+
+    ' Internal Components of "Automation Service" container
+    Container_Boundary(automation_service_container, "Automation Service", "Service", "Управление правилами и расписанием") {
+        Component(automation_api, "Automation API", "Component", "REST API для управления автоматизацией")
+        Component(rule_manager, "Rule Manager", "Component", "Управление правилами")
+    }
+    
+    ' Internal Components of "Automation Engine" container  
+    Container_Boundary(automation_engine_container, "Automation Engine", "Rules engine", "Хранение и выполнение сценариев, обработка триггеров") {
+        Component(automation_engine, "Automation Engine", "Component", "Выполнение сценариев и отправка команд")
+    }
+    
+    ' Internal Components of "Automation Engine DB" container
+    Container_Boundary(automation_engine_db_container, "Automation Engine DB", "Rules engine DB", "Хранение пользовательских сценариев") {
+        Component(automation_db, "Automation DB", "Component", "Хранение пользовательских сценариев")
+    }
+    
+    ' Internal Components of "Scheduler" container
+    Container_Boundary(scheduler_container, "Scheduler", "Cron-like Service", "Планирование сценариев и запуск по расписанию") {
+        Component(scheduler, "Scheduler", "Component", "Планирование и запуск по расписанию")
+    }
+}
+
+' External dependencies
+System_Ext(api_gateway, "API Gateway", "Запросы управления автоматизацией")
+System_Ext(event_bus, "Event Bus", "Отправка команд управления устройствами")
+
+' =================== Main Flow ===================
+' API Gateway to Automation Service
+Rel(api_gateway, automation_api, "Запросы управления автоматизацией")
+
+' Automation API to Rule Manager
+Rel(automation_api, rule_manager, "Передача команд управления")
+
+' Automation Service to Engine
+Rel(rule_manager, automation_engine, "Передача правил и расписаний")
+
+' Rule Manager to Scheduler
+Rel(automation_api, scheduler, "Передача расписаний")
+
+' Scheduler to Engine
+Rel(scheduler, automation_engine, "Запуск по расписанию")
+
+' Engine to Database
+Rel(automation_engine, automation_db, "Сохранение и чтение сценариев")
+
+' Engine to Event Bus
+Rel(automation_engine, event_bus, "Команды управления устройствами")
+
+@enduml

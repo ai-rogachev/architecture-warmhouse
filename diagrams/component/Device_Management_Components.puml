@@ -1,0 +1,57 @@
+@startuml Device_Management_Components
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+' Layout improvements for better readability
+skinparam componentStyle rectangle
+skinparam roundcorner 15
+skinparam nodesep 80
+skinparam ranksep 100
+skinparam linetype polyline
+
+' Component diagram shows internal components of containers from WarmHome_Containers.puml
+Container_Boundary(devices_container, "Device Management System", "Container", "Система управления устройствами") {
+
+    ' Internal Components of "Device Service" container
+    Container_Boundary(device_service_container, "Device Service", "Service", "Подключение, управление и профили устройств") {
+        Component(device_manager, "Device Manager", "Component", "Управление жизненным циклом устройств")
+        Component(connection_handler, "Connection Handler", "Component", "Обработка подключений устройств")
+        Component(profile_manager, "Profile Manager", "Component", "Управление профилями устройств")
+        Component(device_api_handler, "Device API Handler", "Component", "Взаимодействие с внешними устройствами")
+        Component(device_command_processor, "Command Processor", "Component", "Обработка команд управления")
+    }
+    
+    ' Internal Components of "Device DB" container  
+    Container_Boundary(device_db_container, "Device DB", "Relational DB", "Устройства и их профили") {
+        Component(device_repository, "Device Repository", "Component", "Устройства и их профили")
+        Component(connection_repository, "Connection Repository", "Component", "Состояние подключений")
+    }
+}
+
+' External dependencies - based on actual relationships in WarmHome_Containers.puml
+System_Ext(event_bus, "Event Bus", "Источник команд управления")
+System_Ext(device_api, "Device API", "Внешнее API устройств")
+
+' =================== Internal Data Flow ===================
+' Device Service internal flow
+Rel(device_manager, connection_handler, "Управление подключениями")
+Rel(device_manager, profile_manager, "Управление профилями")
+Rel(device_manager, device_command_processor, "Обработка команд")
+
+' Device API interactions
+Rel(device_command_processor, device_api_handler, "Выполнение команд")
+Rel(device_api_handler, device_api, "Взаимодействие с устройствами", "HTTP/HTTPS")
+
+' Connection management flow
+Rel(connection_handler, device_api_handler, "Управление подключениями устройств")
+
+' =================== Data Storage ===================
+' Device Service to Device DB
+Rel(profile_manager, device_repository, "Сохранение профиля оборудования и подключений")
+Rel(connection_handler, connection_repository, "Сохранение состояния устройств")
+
+' =================== External Connections ===================
+' Event Bus connection for commands - ONLY source of commands
+Rel(event_bus, device_manager, "Получение команд управления", "Event Bus")
+
+@enduml

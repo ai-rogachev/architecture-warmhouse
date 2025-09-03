@@ -1,0 +1,91 @@
+@startuml Security_System_Components
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+' Simple layout
+skinparam componentStyle rectangle
+skinparam roundcorner 15
+skinparam nodesep 60
+skinparam ranksep 80
+
+' Component diagram shows internal components of containers from WarmHome_Containers.puml
+Container_Boundary(security_container, "Security System", "Container", "Система безопасности") {
+
+    ' Internal Components of "Auth Service" container
+    Container_Boundary(auth_service_container, "Auth Service", "OIDC / JWT", "Аутентификация и авторизация, ролевая модель") {
+        Component(auth_api, "Auth API", "Component", "API аутентификации")
+        Component(jwt_validator, "JWT Validator", "Component", "Проверка JWT токенов")
+        Component(role_manager, "Role Manager", "Component", "Управление ролями и правами")
+    }
+    
+    ' Internal Components of "Access Control" container  
+    Container_Boundary(access_control_container, "Access / Gate Control Service", "Service", "Управление воротами/замками") {
+        Component(access_controller, "Access Controller", "Component", "Управление доступом")
+        Component(gate_manager, "Gate Manager", "Component", "Управление воротами")
+        Component(security_monitor, "Security Monitor", "Component", "Мониторинг безопасности")
+    }
+    
+    ' Internal Components of "Video Service" container
+    Container_Boundary(video_service_container, "Video / Camera Service", "WebRTC / RTSP", "Видеопоток") {
+        Component(video_streamer, "Video Streamer", "Component", "Видеопоток")
+        Component(camera_manager, "Camera Manager", "Component", "Управление камерами")
+        Component(recording_service, "Recording Service", "Component", "Запись видео")
+    }
+    
+    ' Internal Components of "Event Log DB" container
+    Container_Boundary(event_log_db_container, "Event Log", "Service", "Журнал событий безопасности") {
+        Component(security_logger, "Security Logger", "Component", "Журнал событий безопасности")
+    }
+    
+    ' Internal Components of "VideoService DB" container
+    Container_Boundary(video_service_db_container, "VideoService DB", "Relational DB", "Записи видео наблюдения") {
+        Component(video_storage, "Video Storage", "Component", "Записи видео наблюдения")
+    }
+}
+
+' External dependencies - based on actual relationships in WarmHome_Containers.puml
+System_Ext(api_gateway, "API Gateway", "Запросы безопасности")
+System_Ext(gate_api, "Gate API", "Внешнее API ворот")
+
+' =================== Authentication Flow ===================
+' API Gateway to Auth Service
+Rel(api_gateway, auth_api, "Проверка JWT", "GraphQL/REST")
+
+' Auth Service internal flow
+Rel(auth_api, jwt_validator, "Валидация токенов")
+Rel(jwt_validator, role_manager, "Проверка ролей")
+
+' =================== Access Control Flow ===================
+' API Gateway to Access Control
+Rel(api_gateway, access_controller, "Управление доступом")
+
+' Access Control internal flow
+Rel(access_controller, gate_manager, "Управление воротами")
+Rel(gate_manager, gate_api, "Взаимодействие с воротами", "HTTP/HTTPS")
+
+' Security monitoring flow
+Rel(access_controller, security_monitor, "События доступа")
+Rel(gate_manager, security_monitor, "Статус ворот")
+Rel(security_monitor, security_logger, "Логирование угроз")
+Rel(security_monitor, access_controller, "Блокировка доступа при угрозе")
+
+' =================== Video Service Flow ===================
+' API Gateway to Video Service
+Rel(api_gateway, camera_manager, "Управление камерами")
+
+' Video Service internal flow
+Rel(camera_manager, video_streamer, "Управление видеопотоками")
+Rel(video_streamer, recording_service, "Запись видео")
+
+' Security coordination with video
+Rel(security_monitor, recording_service, "Приоритетная запись угроз")
+
+' =================== Data Storage ===================
+' Security logging
+Rel(auth_api, security_logger, "Логирование аутентификации")
+Rel(access_controller, security_logger, "Логирование доступа")
+
+' Video storage
+Rel(recording_service, video_storage, "Сохранение видео")
+
+@enduml

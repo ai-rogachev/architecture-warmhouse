@@ -1,0 +1,49 @@
+@startuml Monitoring_System_Components
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+' Layout improvements for better readability
+left to right direction
+skinparam componentStyle rectangle
+skinparam roundcorner 15
+skinparam nodesep 80
+skinparam ranksep 100
+skinparam linetype polyline
+
+' Component diagram shows internal components of containers from WarmHome_Containers.puml
+Container_Boundary(monitoring_container, "Monitoring System", "Container", "Система мониторинга и сбора метрик") {
+
+    ' Internal Components of "Timeseries Service" container
+    Container_Boundary(timeseries_container, "Timeseries Service", "Service", "Сбор телеметрии и метрик") {
+        Component(telemetry_receiver, "Telemetry Receiver", "Component", "Получение телеметрии из Event Bus")
+        Component(data_processor, "Data Processor", "Component", "Обработка и агрегация данных")
+        Component(metrics_api, "Metrics API", "Component", "REST API для получения метрик")
+    }
+    
+    ' Internal Components of "Time-Series DB" container  
+    Container_Boundary(tsdb_container, "Time-Series DB", "TSDB (e.g. InfluxDB)", "Хранение телеметрии и метрик") {
+        Component(tsdb, "TSDB", "Component", "Хранение телеметрии и метрик")
+    }
+}
+
+' External dependencies - based on actual relationships in WarmHome_Containers.puml
+System_Ext(event_bus, "Event Bus", "Источник телеметрии")
+System_Ext(api_gateway, "API Gateway", "Запросы метрик")
+
+' =================== Data Flow ===================
+' Internal relationships within Timeseries Service
+Rel(telemetry_receiver, data_processor, "Передача сырых данных")
+Rel(data_processor, metrics_api, "Предоставление данных")
+
+' Data storage flow
+Rel(data_processor, tsdb, "Запись обработанных данных")
+Rel(tsdb, metrics_api, "Чтение метрик")
+
+' =================== External Connections ===================
+' Event Bus connection
+Rel(event_bus, telemetry_receiver, "Получение телеметрии", "Event Bus")
+
+' API Gateway connection
+Rel(api_gateway, metrics_api, "Запросы метрик", "GraphQL/REST")
+
+@enduml
