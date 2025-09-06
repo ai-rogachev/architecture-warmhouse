@@ -27,10 +27,16 @@ jobs:
 
     - name: Generate Diagrams
       run: |
-        plantuml diagrams/context/*.puml
-        plantuml diagrams/container/*.puml
-        plantuml diagrams/component/*.puml
-        plantuml diagrams/code/*.puml
+        for dir in diagrams/context diagrams/container diagrams/component diagrams/code; do
+          if [ -d "$dir" ]; then
+            for file in "$dir"/*.puml; do
+              if [ -f "$file" ]; then
+                echo "Processing: $file"
+                plantuml "$file"
+              fi
+            done
+          fi
+        done
 
     - name: Commit Diagrams
       run: |
