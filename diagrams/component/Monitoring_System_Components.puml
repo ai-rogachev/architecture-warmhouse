@@ -1,6 +1,6 @@
 @startuml Monitoring_System_Components
 
-!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
 
 ' Layout improvements for better readability
 left to right direction

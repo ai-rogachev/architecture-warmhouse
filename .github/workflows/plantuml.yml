@@ -27,7 +27,7 @@ jobs:
 
     - name: Generate Diagrams
       run: |
-        for dir in diagrams/context diagrams/container diagrams/component diagrams/code; do
+        for dir in diagrams/context diagrams/container diagrams/component diagrams/code diagrams/ER; do
           if [ -d "$dir" ]; then
             for file in "$dir"/*.puml; do
               if [ -f "$file" ]; then
