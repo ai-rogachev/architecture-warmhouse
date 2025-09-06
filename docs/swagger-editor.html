@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WarmHome API - Swagger Editor</title>
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-editor-dist@4.15.5/swagger-editor.css" />
+</head>
+<body>
+    <div id="swagger-editor"></div>
+    <script src="https://unpkg.com/swagger-editor-dist@4.15.5/swagger-editor-bundle.js"></script>
+    <script>
+        window.onload = function() {
+            const editor = SwaggerEditorBundle({
+                url: './swagger.yaml',
+                dom_id: '#swagger-editor',
+                layout: "StandaloneLayout",
+                presets: [
+                    SwaggerEditorStandalonePreset
+                ],
+                validatorUrl: null,
+                onComplete: function() {
+                    console.log('Swagger Editor loaded successfully');
+                }
+            });
+        };
+    </script>
+</body>
+</html>
