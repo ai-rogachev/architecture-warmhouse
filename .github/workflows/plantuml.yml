@@ -59,10 +59,12 @@ jobs:
             echo "Pull request detected. Source branch: ${{ github.head_ref }}"
             # Fetch the source branch
             git fetch origin ${{ github.head_ref }}:${{ github.head_ref }}
+            git pull origin ${{ github.head_ref }} --rebase
             # Push to the source branch
             git push origin HEAD:refs/heads/${{ github.head_ref }}
           else
             echo "Direct push detected. Target: ${{ github.ref }}"
+            git pull origin ${{ github.ref_name }} --rebase
             git push origin HEAD:${{ github.ref }}
           fi
         fi
