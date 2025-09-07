@@ -78,28 +78,35 @@
 
 ### 5. Визуализация контекста системы — диаграмма С4
 
-[WarmHouse Context Diagram](./diagrams/context/WarmHome_Context.png)
+![WarmHouse Context Diagram](./diagrams/context/WarmHome_Context.png)
 
 ### Задание 2. Проектирование микросервисной архитектуры
 
 **Диаграмма контейнеров (Containers)**
 
-[WarmHouse Containers Diagram](./diagrams/context/WarmHome_Containers.png)
+![WarmHouse Containers Diagram](./diagrams/container/WarmHome_Containers.png)
 
 **Диаграмма компонентов (Components)**
 
-[WarmHouse Automation_System Diagram](./diagrams/component/Automation_System_Components.png)
-[WarmHouse Device_Management Diagram](./diagrams/component/Device_Management_Components.png)
-[WarmHouse Monitoring_System Diagram](./diagrams/component/Monitoring_System_Components.png)
-[WarmHouse Security_System Diagram](./diagrams/component/Security_System_Components.png)
+- WarmHouse Automation_System Diagram
+![WarmHouse Automation_System Diagram](./diagrams/component/Automation_System_Components.png)
+
+- WarmHouse Device_Management Diagram
+![WarmHouse Device_Management Diagram](./diagrams/component/Device_Management_Components.png)
+
+- WarmHouse Monitoring_System Diagram
+![WarmHouse Monitoring_System Diagram](./diagrams/component/Monitoring_System_Components.png)
+
+- WarmHouse Security_System Diagram
+![WarmHouse Security_System Diagram](./diagrams/component/Security_System_Components.png)
 
 **Диаграмма кода (Code)**
 
-[WarmHouse Device Management Code Diagram](./diagrams/code/Device_Management_Code.png)
+![WarmHouse Device Management Code Diagram](./diagrams/code/Device_Management_Code.png)
 
 # Задание 3. Разработка ER-диаграммы
 
-[WarmHouse Entity-Relationship Diagram](./diagrams/ER/WarmHome_Logical_DB_Model.png)
+![WarmHouse Entity-Relationship Diagram](./diagrams/ER/WarmHome_Logical_DB_Model.png)
 
 # Задание 4. Создание и документирование API
 
