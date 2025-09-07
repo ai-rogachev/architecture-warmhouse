@@ -53,7 +53,17 @@ jobs:
           echo "No changes to commit"
         else
           git commit -m "Automated diagram generation"
-          git branch --all
-          git push origin main
+          
+          # For pull requests, we need to fetch the source branch first
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "Pull request detected. Source branch: ${{ github.head_ref }}"
+            # Fetch the source branch
+            git fetch origin ${{ github.head_ref }}:${{ github.head_ref }}
+            # Push to the source branch
+            git push origin HEAD:refs/heads/${{ github.head_ref }}
+          else
+            echo "Direct push detected. Target: ${{ github.ref }}"
+            git push origin HEAD:${{ github.ref }}
+          fi
         fi
       if: success()
