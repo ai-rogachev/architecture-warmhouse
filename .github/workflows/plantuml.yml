@@ -11,29 +11,29 @@ on:
 jobs:
   generate-diagrams:
     runs-on: ubuntu-latest
-    container: plantuml/plantuml:latest
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
 
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    - name: Download PlantUML JAR
+      run: |
+        wget -O plantuml.jar https://github.com/plantuml/plantuml/releases/download/v1.2025.4/plantuml-1.2025.4.jar
+
     - name: Generate Diagrams
       run: |
-        echo "Checking PlantUML installation..."
-        which plantuml || echo "plantuml not found in PATH"
-        ls -la /usr/local/bin/ | grep plantuml || echo "No plantuml in /usr/local/bin/"
-        ls -la /usr/bin/ | grep plantuml || echo "No plantuml in /usr/bin/"
-        echo "Available commands:"
-        ls -la /usr/local/bin/ | head -10
-        echo "Trying java -jar approach..."
-        find / -name "plantuml*.jar" 2>/dev/null | head -5 || echo "No plantuml jar found"
-        
         for dir in diagrams/context diagrams/container diagrams/component diagrams/code diagrams/ER; do
           if [ -d "$dir" ]; then
             for file in "$dir"/*.puml; do
               if [ -f "$file" ]; then
                 echo "Processing: $file"
-                java -jar /usr/local/bin/plantuml.jar -tpng "$file" || plantuml -tpng "$file"
+                java -jar plantuml.jar -tpng "$file"
               fi
             done
           fi
