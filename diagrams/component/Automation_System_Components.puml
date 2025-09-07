@@ -35,7 +35,7 @@ Container_Boundary(automations_container, "Automation System", "Container", "С�
 
 ' External dependencies
 System_Ext(api_gateway, "API Gateway", "Запросы управления автоматизацией")
-System_Ext(event_bus, "Event Bus", "Отправка команд управления устройствами")
+System_Ext(device_service, "Device Service", "Отправка команд управления устройствами")
 
 ' =================== Main Flow ===================
 ' API Gateway to Automation Service
@@ -56,7 +56,7 @@ Rel(scheduler, automation_engine, "Запуск по расписанию")
 ' Engine to Database
 Rel(automation_engine, automation_db, "Сохранение и чтение сценариев")
 
-' Engine to Event Bus
-Rel(automation_engine, event_bus, "Команды управления устройствами")
+' Engine to Device Service
+Rel(automation_engine, device_service, "Команды управления устройствами", "REST")
 
 @enduml

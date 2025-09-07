@@ -15,7 +15,7 @@ Container_Boundary(monitoring_container, "Monitoring System", "Container", "Си
 
     ' Internal Components of "Timeseries Service" container
     Container_Boundary(timeseries_container, "Timeseries Service", "Service", "Сбор телеметрии и метрик") {
-        Component(telemetry_receiver, "Telemetry Receiver", "Component", "Получение телеметрии из Event Bus")
+        Component(telemetry_receiver, "Telemetry Receiver", "Component", "Получение телеметрии от устройств")
         Component(data_processor, "Data Processor", "Component", "Обработка и агрегация данных")
         Component(metrics_api, "Metrics API", "Component", "REST API для получения метрик")
     }
@@ -27,21 +27,20 @@ Container_Boundary(monitoring_container, "Monitoring System", "Container", "Си
 }
 
 ' External dependencies - based on actual relationships in WarmHome_Containers.puml
-System_Ext(event_bus, "Event Bus", "Источник телеметрии")
+System_Ext(device_service, "Device Service", "Запросы телеметрии от устройств")
 System_Ext(api_gateway, "API Gateway", "Запросы метрик")
 
 ' =================== Data Flow ===================
 ' Internal relationships within Timeseries Service
 Rel(telemetry_receiver, data_processor, "Передача сырых данных")
-Rel(data_processor, metrics_api, "Предоставление данных")
 
 ' Data storage flow
 Rel(data_processor, tsdb, "Запись обработанных данных")
 Rel(tsdb, metrics_api, "Чтение метрик")
 
 ' =================== External Connections ===================
-' Event Bus connection
-Rel(event_bus, telemetry_receiver, "Получение телеметрии", "Event Bus")
+' Device Service connection for telemetry
+Rel(telemetry_receiver, device_service, "Получение телеметрии", "REST")
 
 ' API Gateway connection
 Rel(api_gateway, metrics_api, "Запросы метрик", "GraphQL/REST")

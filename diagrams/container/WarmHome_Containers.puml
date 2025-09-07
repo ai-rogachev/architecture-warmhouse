@@ -54,7 +54,6 @@ System_Boundary(s1,"WarmHome Ecosystem (SaaS)") {
   ' =================== Service Containers ===================
   Container(api_gateway, "API Gateway", "GraphQL / REST", "Единая точка входа для UI и внешних интеграций")
   Container(partner_portal, "Partner Portal", "Web Service", "Инструменты для партнёров и поддержка устройств")
-  Container(event_bus, "Event Bus / Queue", "Message Queue (Kafka/RabbitMQ)", "Асинхронная коммуникация между сервисами")
 }
 System_Ext(device_api, "Device API", "Внешнее API устройств")
 System_Ext(gate_api, "Gate API", "Внешнее API ворот")
@@ -71,15 +70,14 @@ Rel_D(api_gateway, auth_svc, "Проверка JWT / пользовательс�
 Rel_D(api_gateway, access_control, "API → Access Control")
 Rel(api_gateway, automation, "API → Automation Service")
 Rel_D(api_gateway, video_service, "API → Video Service")
-Rel_D(api_gateway, timeseries, "API → Timeseries Service")
 
 Rel(partner_portal, api_gateway, "Подключение партнерских устройств")
 
-' =================== Event Bus Communications ===================
-Rel(api_gateway, event_bus, "API → Device Service")
-Rel(automation_engine, event_bus, "Команды управления устройствами")
-Rel(event_bus, device, "Запросы к устройствам")
-Rel(timeseries, event_bus, "Телеметрия")
+' =================== Direct Service Communications ===================
+Rel(api_gateway, device, "API → Device Service", "REST")
+Rel(automation_engine, device, "Команды управления устройствами", "REST")
+Rel(api_gateway, timeseries, "API → Timeseries Service", "REST")
+Rel(timeseries, device, "Запросы телеметрии", "REST")
 
 ' =================== Database Connections ===================
 Rel(timeseries, timeseries_db, "Хранение метрик")
