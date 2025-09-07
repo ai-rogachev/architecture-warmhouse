@@ -11,19 +11,11 @@ on:
 jobs:
   generate-diagrams:
     runs-on: ubuntu-latest
+    container: plantuml/plantuml:latest
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-
-    - name: Set up Java
-      uses: actions/setup-java@v4
-      with:
-        distribution: 'temurin'
-        java-version: '11'
-
-    - name: Install PlantUML
-      run: sudo apt-get install plantuml
 
     - name: Generate Diagrams
       run: |
@@ -32,7 +24,7 @@ jobs:
             for file in "$dir"/*.puml; do
               if [ -f "$file" ]; then
                 echo "Processing: $file"
-                plantuml "$file"
+                plantuml -tpng "$file"
               fi
             done
           fi
