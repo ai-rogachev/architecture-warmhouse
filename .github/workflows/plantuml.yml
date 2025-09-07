@@ -53,6 +53,7 @@ jobs:
           echo "No changes to commit"
         else
           git commit -m "Automated diagram generation"
+          git branch --all
           git push origin main
         fi
       if: success()
