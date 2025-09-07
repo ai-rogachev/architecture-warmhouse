@@ -1,0 +1,172 @@
+@startuml WarmHome_Logical_DB_Model
+
+!define table(x) class x << (T,#FFAAAA) >>
+!define primary_key(x) <b>x</b>
+!define foreign_key(x) <i>x</i>
+
+' Layout
+skinparam classAttributeIconSize 0
+skinparam classFontSize 10
+skinparam classFontName Arial
+skinparam roundcorner 15
+skinparam linetype ortho
+
+' =================== BASE ENTITIES (Core Domain) ===================
+
+' 1. USER - Core identity management
+table(user) {
+    +primary_key(id): UUID
+    +foreign_key(role_id): UUID
+    +username: VARCHAR(50)
+    +email: VARCHAR(100)
+    +password_hash: VARCHAR(255)
+    +first_name: VARCHAR(50)
+    +last_name: VARCHAR(50)
+    +phone: VARCHAR(20)
+    +status: ENUM('active', 'inactive', 'suspended')
+    +created_at: TIMESTAMP
+    +updated_at: TIMESTAMP
+}
+
+' 2. HOUSE - Core property management
+table(house) {
+    +primary_key(id): UUID
+    +foreign_key(owner_id): UUID
+    +name: VARCHAR(100)
+    +address: TEXT
+    +city: VARCHAR(100)
+    +country: VARCHAR(100)
+    +postal_code: VARCHAR(20)
+    +timezone: VARCHAR(50)
+    +status: ENUM('active', 'inactive', 'maintenance')
+    +created_at: TIMESTAMP
+    +updated_at: TIMESTAMP
+}
+
+' 3. DEVICE - Core device management
+table(device) {
+    +primary_key(id): UUID
+    +foreign_key(house_id): UUID
+    +foreign_key(device_type_id): UUID
+    +name: VARCHAR(100)
+    +serial_number: VARCHAR(100)
+    +model: VARCHAR(100)
+    +manufacturer: VARCHAR(100)
+    +ip_address: INET
+    +mac_address: MACADDR
+    +status: ENUM('online', 'offline', 'error', 'maintenance')
+    +last_seen: TIMESTAMP
+    +created_at: TIMESTAMP
+    +updated_at: TIMESTAMP
+}
+
+' 4. DEVICE_TYPE - Device categorization
+table(device_type) {
+    +primary_key(id): UUID
+    +name: VARCHAR(100)
+    +category: ENUM('sensor', 'actuator', 'hvac', 'lighting')
+    +capabilities: JSONB
+    +protocol: VARCHAR(50)
+    +created_at: TIMESTAMP
+}
+
+' 5. ROLE - User permissions and access control
+table(role) {
+    +primary_key(id): UUID
+    +name: VARCHAR(50)
+    +description: TEXT
+    +permissions: JSONB
+    +created_at: TIMESTAMP
+}
+
+
+
+' 7. HOUSE_MEMBER - Users who have access to specific houses
+table(house_member) {
+    +primary_key(id): UUID
+    +foreign_key(house_id): UUID
+    +foreign_key(user_id): UUID
+    +access_level: ENUM('owner', 'admin', 'member', 'guest')
+    +invited_at: TIMESTAMP
+    +invited_by: UUID
+    +status: ENUM('pending', 'active', 'revoked')
+}
+
+' 8. AUTOMATION_RULE - Core automation logic
+table(automation_rule) {
+    +primary_key(id): UUID
+    +foreign_key(house_id): UUID
+    +foreign_key(created_by): UUID
+    +name: VARCHAR(100)
+    +description: TEXT
+    +trigger_conditions: JSONB
+    +actions: JSONB
+    +schedule: JSONB
+    +status: ENUM('active', 'inactive', 'draft')
+    +created_at: TIMESTAMP
+    +updated_at: TIMESTAMP
+}
+
+' 9. SECURITY_EVENT - Core security logging
+table(security_event) {
+    +primary_key(id): UUID
+    +foreign_key(house_id): UUID
+    +foreign_key(user_id): UUID
+    +foreign_key(device_id): UUID
+    +event_type: ENUM('access_granted', 'access_denied', 'intrusion_detected', 'device_offline', 'suspicious_activity')
+    +severity: ENUM('low', 'medium', 'high', 'critical')
+    +description: TEXT
+    +metadata: JSONB
+    +occurred_at: TIMESTAMP
+    +created_at: TIMESTAMP
+}
+
+
+
+' =================== RELATIONSHIPS ===================
+
+' Core relationships
+user ||--o{ house : владеет
+user ||--o{ role : имеет_роль
+house ||--o{ device : содержит
+house ||--o{ house_member : имеет_участников
+house ||--o{ automation_rule : имеет_правила
+house ||--o{ security_event : логирует_события
+
+device ||--o{ security_event : вызывает
+device_type ||--o{ device : категоризирует
+
+user ||--o{ house_member : участник
+user ||--o{ automation_rule : создает
+user ||--o{ security_event : участвует
+
+' =================== NOTES ===================
+note left of user
+  Основное управление идентификацией
+  - Аутентификация и авторизация
+  - Профили пользователей и настройки
+  - Поддержка мультитенантности
+end note
+
+note right of house
+  Основное управление недвижимостью
+  - Поддержка нескольких объектов на пользователя
+  - Настройки местоположения и часового пояса
+  - Управление статусом объекта
+end note
+
+note top of device
+  Основное управление устройствами
+  - Управление жизненным циклом устройств
+  - Отслеживание состояния подключения
+  - Категоризация типов устройств
+end note
+
+note bottom of automation_rule
+  Основная логика автоматизации
+  - Правила на основе триггеров
+  - Автоматизация по расписанию
+  - Координация нескольких устройств
+end note
+
+@enduml

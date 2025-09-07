@@ -1,0 +1,3014 @@
+openapi: 3.0.3
+info:
+  title: WarmHome Smart Home API
+  description: |
+    Comprehensive API for WarmHome Smart Home Ecosystem
+    This API provides endpoints for all major services including monitoring, device management, automation, and security.
+  version: 1.0.0
+  contact:
+    name: WarmHome API Support
+    email: api@warmhome.com
+
+servers:
+  - url: https://api.warmhome.com/v1
+    description: Production server
+  - url: https://staging-api.warmhome.com/v1
+    description: Staging server
+  - url: http://localhost:8080/api/v1
+    description: Local development server
+
+security:
+  - BearerAuth: []
+  - ApiKeyAuth: []
+
+paths:
+  # Monitoring System - Timeseries Service
+  /monitoring/timeseries:
+    get:
+      summary: Get Timeseries Data
+      description: Retrieve timeseries data for sensors and devices
+      tags:
+        - Monitoring
+      parameters:
+        - name: sensor_id
+          in: query
+          description: Filter by sensor ID
+          schema:
+            type: integer
+          example: 5
+        - name: start_time
+          in: query
+          description: Start time for data range
+          schema:
+            type: string
+            format: date-time
+          example: "2024-01-15T00:00:00Z"
+        - name: end_time
+          in: query
+          description: End time for data range
+          schema:
+            type: string
+            format: date-time
+          example: "2024-01-15T23:59:59Z"
+        - name: limit
+          in: query
+          description: Maximum number of records to return
+          schema:
+            type: integer
+            default: 100
+          example: 50
+      responses:
+        '200':
+          description: Timeseries data retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TimeseriesData'
+              examples:
+                temperature_data:
+                  summary: Temperature Data
+                  description: Example response with temperature sensor data
+                  value:
+                    - id: 1
+                      sensor_id: 5
+                      value: 22.5
+                      unit: "°C"
+                      timestamp: "2024-01-15T10:30:00Z"
+                      metadata:
+                        humidity: 45.2
+                        battery_level: 85
+                        signal_strength: "strong"
+                    - id: 2
+                      sensor_id: 5
+                      value: 22.3
+                      unit: "°C"
+                      timestamp: "2024-01-15T10:25:00Z"
+                      metadata:
+                        humidity: 45.5
+                        battery_level: 85
+                        signal_strength: "strong"
+                    - id: 3
+                      sensor_id: 5
+                      value: 22.7
+                      unit: "°C"
+                      timestamp: "2024-01-15T10:20:00Z"
+                      metadata:
+                        humidity: 44.8
+                        battery_level: 85
+                        signal_strength: "strong"
+                humidity_data:
+                  summary: Humidity Data
+                  description: Example response with humidity sensor data
+                  value:
+                    - id: 4
+                      sensor_id: 6
+                      value: 45.2
+                      unit: "%"
+                      timestamp: "2024-01-15T10:30:00Z"
+                      metadata:
+                        temperature: 22.5
+                        pressure: 1013.25
+                        battery_level: 90
+                    - id: 5
+                      sensor_id: 6
+                      value: 45.0
+                      unit: "%"
+                      timestamp: "2024-01-15T10:25:00Z"
+                      metadata:
+                        temperature: 22.3
+                        pressure: 1013.20
+                        battery_level: 90
+        '400':
+          description: Bad request - invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                invalid_parameters:
+                  summary: Invalid Parameters
+                  description: Example response when query parameters are invalid
+                  value:
+                    error: "Invalid parameters"
+                    code: "INVALID_PARAMETERS"
+                    details:
+                      field: "start_time"
+                      reason: "Invalid date format. Use ISO 8601 format (YYYY-MM-DDTHH:MM:SSZ)"
+                      value: "invalid-date"
+                    timestamp: "2024-01-15T10:30:00Z"
+        '401':
+          description: Unauthorized - authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                unauthorized:
+                  summary: Unauthorized
+                  description: Example response when authentication is required
+                  value:
+                    error: "Authentication required"
+                    code: "UNAUTHORIZED"
+                    details:
+                      field: "authorization"
+                      reason: "Valid JWT token is required"
+                    timestamp: "2024-01-15T10:30:00Z"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                server_error:
+                  summary: Server Error
+                  description: Example response when server error occurs
+                  value:
+                    error: "Internal server error"
+                    code: "INTERNAL_SERVER_ERROR"
+                    details:
+                      field: "system"
+                      reason: "Database connection failed"
+                    timestamp: "2024-01-15T10:30:00Z"
+
+    post:
+      summary: Create Timeseries Data
+      description: Create new timeseries data point
+      tags:
+        - Monitoring
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TimeseriesDataCreate'
+            examples:
+              temperature_reading:
+                summary: Temperature Reading
+                description: Example of creating a temperature sensor reading
+                value:
+                  sensor_id: 5
+                  value: 22.5
+                  unit: "°C"
+                  timestamp: "2024-01-15T10:30:00Z"
+                  metadata:
+                    humidity: 45.2
+                    battery_level: 85
+              humidity_reading:
+                summary: Humidity Reading
+                description: Example of creating a humidity sensor reading
+                value:
+                  sensor_id: 6
+                  value: 45.2
+                  unit: "%"
+                  timestamp: "2024-01-15T10:30:00Z"
+                  metadata:
+                    temperature: 22.5
+                    pressure: 1013.25
+      responses:
+        '201':
+          description: Timeseries data created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimeseriesData'
+              examples:
+                success_response:
+                  summary: Successful Creation
+                  description: Example response when timeseries data is created
+                  value:
+                    id: 1
+                    sensor_id: 5
+                    value: 22.5
+                    unit: "°C"
+                    timestamp: "2024-01-15T10:30:00Z"
+                    metadata:
+                      humidity: 45.2
+                      battery_level: 85
+                      signal_strength: "strong"
+        '400':
+          description: Bad request - invalid input data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                validation_error:
+                  summary: Validation Error
+                  description: Example response when validation fails
+                  value:
+                    error: "Invalid input data"
+                    code: "VALIDATION_ERROR"
+                    details:
+                      field: "sensor_id"
+                      reason: "Sensor ID is required"
+                      value: null
+                    timestamp: "2024-01-15T10:30:00Z"
+        '401':
+          description: Unauthorized - authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                unauthorized:
+                  summary: Unauthorized
+                  description: Example response when authentication is required
+                  value:
+                    error: "Authentication required"
+                    code: "UNAUTHORIZED"
+                    details:
+                      field: "authorization"
+                      reason: "Valid JWT token is required"
+                    timestamp: "2024-01-15T10:30:00Z"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                server_error:
+                  summary: Server Error
+                  description: Example response when server error occurs
+                  value:
+                    error: "Internal server error"
+                    code: "INTERNAL_SERVER_ERROR"
+                    details:
+                      field: "system"
+                      reason: "Database connection failed"
+                    timestamp: "2024-01-15T10:30:00Z"
+
+  /monitoring/timeseries/{id}:
+    get:
+      summary: Get Timeseries Data by ID
+      description: Retrieve specific timeseries data point
+      tags:
+        - Monitoring
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Timeseries data ID
+          schema:
+            type: integer
+          example: 1
+      responses:
+        '200':
+          description: Timeseries data retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimeseriesData'
+              examples:
+                timeseries_found:
+                  summary: Timeseries Data Found
+                  description: Example response when timeseries data is retrieved successfully
+                  value:
+                    id: 1
+                    sensor_id: 5
+                    value: 22.5
+                    unit: "°C"
+                    timestamp: "2024-01-15T10:30:00Z"
+                    metadata:
+                      humidity: 45.2
+                      battery_level: 85
+                      signal_strength: "strong"
+        '404':
+          description: Timeseries data not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                timeseries_not_found:
+                  summary: Timeseries Data Not Found
+                  description: Example response when timeseries data is not found
+                  value:
+                    error: "Timeseries data not found"
+                    code: "TIMESERIES_NOT_FOUND"
+                    details:
+                      field: "id"
+                      reason: "Timeseries data with specified ID does not exist"
+                      value: 999
+                    timestamp: "2024-01-15T10:30:00Z"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                server_error:
+                  summary: Server Error
+                  description: Example response when server error occurs
+                  value:
+                    error: "Internal server error"
+                    code: "INTERNAL_SERVER_ERROR"
+                    details:
+                      field: "system"
+                      reason: "Database connection failed"
+                    timestamp: "2024-01-15T10:30:00Z"
+
+    delete:
+      summary: Delete Timeseries Data
+      description: Delete specific timeseries data point
+      tags:
+        - Monitoring
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Timeseries data ID
+          schema:
+            type: integer
+          example: 1
+      responses:
+        '204':
+          description: Timeseries data deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Timeseries data deleted successfully"
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: "2024-01-15T10:30:00Z"
+              examples:
+                deletion_success:
+                  summary: Deletion Success
+                  description: Example response when timeseries data is deleted successfully
+                  value:
+                    message: "Timeseries data deleted successfully"
+                    timestamp: "2024-01-15T10:30:00Z"
+        '404':
+          description: Timeseries data not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                timeseries_not_found:
+                  summary: Timeseries Data Not Found
+                  description: Example response when timeseries data is not found
+                  value:
+                    error: "Timeseries data not found"
+                    code: "TIMESERIES_NOT_FOUND"
+                    details:
+                      field: "id"
+                      reason: "Timeseries data with specified ID does not exist"
+                      value: 999
+                    timestamp: "2024-01-15T10:30:00Z"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                server_error:
+                  summary: Server Error
+                  description: Example response when server error occurs
+                  value:
+                    error: "Internal server error"
+                    code: "INTERNAL_SERVER_ERROR"
+                    details:
+                      field: "system"
+                      reason: "Database connection failed"
+                    timestamp: "2024-01-15T10:30:00Z"
+
+  # Device Management System
+  /devices:
+    get:
+      summary: Get All Devices
+      description: Retrieve all registered devices
+      tags:
+        - Device Management
+      parameters:
+        - name: type
+          in: query
+          description: Filter by device type
+          schema:
+            type: string
+          example: "temperature"
+        - name: status
+          in: query
+          description: Filter by device status
+          schema:
+            type: string
+          example: "online"
+        - name: location
+          in: query
+          description: Filter by device location
+          schema:
+            type: string
+          example: "Living Room"
+      responses:
+        '200':
+          description: Devices retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Device'
+              examples:
+                devices_list:
+                  summary: Devices List
+                  description: Example response with list of devices
+                  value:
+                    - id: 1
+                      name: "Living Room Temperature Sensor"
+                      type: "temperature"
+                      model: "DHT22"
+                      location: "Living Room"
+                      status: "online"
+                      ip_address: "192.168.1.100"
+                      mac_address: "AA:BB:CC:DD:EE:FF"
+                      created_at: "2024-01-15T10:30:00Z"
+                      updated_at: "2024-01-15T10:30:00Z"
+                    - id: 2
+                      name: "Kitchen Light"
+                      type: "lighting"
+                      model: "Philips Hue"
+                      location: "Kitchen"
+                      status: "online"
+                      ip_address: "192.168.1.101"
+                      mac_address: "BB:CC:DD:EE:FF:00"
+                      created_at: "2024-01-15T10:30:00Z"
+                      updated_at: "2024-01-15T10:30:00Z"
+                    - id: 3
+                      name: "Front Door Motion Sensor"
+                      type: "motion"
+                      model: "PIR-001"
+                      location: "Front Door"
+                      status: "offline"
+                      ip_address: "192.168.1.102"
+                      mac_address: "CC:DD:EE:FF:00:11"
+                      created_at: "2024-01-15T10:30:00Z"
+                      updated_at: "2024-01-15T10:30:00Z"
+        '401':
+          description: Unauthorized - authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                unauthorized:
+                  summary: Unauthorized
+                  description: Example response when authentication is required
+                  value:
+                    error: "Authentication required"
+                    code: "UNAUTHORIZED"
+                    details:
+                      field: "authorization"
+                      reason: "Valid JWT token is required"
+                    timestamp: "2024-01-15T10:30:00Z"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                server_error:
+                  summary: Server Error
+                  description: Example response when server error occurs
+                  value:
+                    error: "Internal server error"
+                    code: "INTERNAL_SERVER_ERROR"
+                    details:
+                      field: "system"
+                      reason: "Database connection failed"
+                    timestamp: "2024-01-15T10:30:00Z"
+
+    post:
+      summary: Create New Device
+      description: Register a new device in the system
+      tags:
+        - Device Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceCreate'
+            examples:
+              temperature_sensor:
+                summary: Temperature Sensor
+                description: Example of creating a temperature sensor
+                value:
+                  name: "Kitchen Temperature Sensor"
+                  type: "temperature"
+                  location: "Kitchen"
+                  model: "DHT22"
+                  ip_address: "192.168.1.101"
+                  mac_address: "AA:BB:CC:DD:EE:FF"
+              motion_sensor:
+                summary: Motion Sensor
+                description: Example of creating a motion sensor
+                value:
+                  name: "Front Door Motion Sensor"
+                  type: "motion"
+                  location: "Front Door"
+                  model: "PIR-001"
+                  ip_address: "192.168.1.102"
+                  mac_address: "BB:CC:DD:EE:FF:00"
+              smart_light:
+                summary: Smart Light
+                description: Example of creating a smart light
+                value:
+                  name: "Living Room Light"
+                  type: "lighting"
+                  location: "Living Room"
+                  model: "Philips Hue"
+                  ip_address: "192.168.1.103"
+                  mac_address: "CC:DD:EE:FF:00:11"
+      responses:
+        '201':
+          description: Device created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Device'
+              examples:
+                success_response:
+                  summary: Successful Device Creation
+                  description: Example response when device is created
+                  value:
+                    id: 1
+                    name: "Kitchen Temperature Sensor"
+                    type: "temperature"
+                    model: "DHT22"
+                    location: "Kitchen"
+                    status: "online"
+                    ip_address: "192.168.1.101"
+                    mac_address: "AA:BB:CC:DD:EE:FF"
+                    created_at: "2024-01-15T10:30:00Z"
+                    updated_at: "2024-01-15T10:30:00Z"
+        '400':
+          description: Bad request - invalid input data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                validation_error:
+                  summary: Validation Error
+                  description: Example response when validation fails
+                  value:
+                    error: "Invalid input data"
+                    code: "VALIDATION_ERROR"
+                    details:
+                      field: "name"
+                      reason: "Device name is required"
+                      value: ""
+                    timestamp: "2024-01-15T10:30:00Z"
+        '401':
+          description: Unauthorized - authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                unauthorized:
+                  summary: Unauthorized
+                  description: Example response when authentication is required
+                  value:
+                    error: "Authentication required"
+                    code: "UNAUTHORIZED"
+                    details:
+                      field: "authorization"
+                      reason: "Valid JWT token is required"
+                    timestamp: "2024-01-15T10:30:00Z"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                server_error:
+                  summary: Server Error
+                  description: Example response when server error occurs
+                  value:
+                    error: "Internal server error"
+                    code: "INTERNAL_SERVER_ERROR"
+                    details:
+                      field: "system"
+                      reason: "Database connection failed"
+                    timestamp: "2024-01-15T10:30:00Z"
+
+  /devices/{id}:
+    get:
+      summary: Get Device by ID
+      description: Retrieve specific device information
+      tags:
+        - Device Management
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Device ID
+          schema:
+            type: integer
+          example: 1
+      responses:
+        '200':
+          description: Device retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Device'
+              examples:
+                device_found:
+                  summary: Device Found
+                  description: Example response when device is retrieved successfully
+                  value:
+                    id: 1
+                    name: "Living Room Temperature Sensor"
+                    type: "temperature"
+                    model: "DHT22"
+                    location: "Living Room"
+                    status: "online"
+                    ip_address: "192.168.1.100"
+                    mac_address: "AA:BB:CC:DD:EE:FF"
+                    created_at: "2024-01-15T10:30:00Z"
+                    updated_at: "2024-01-15T10:30:00Z"
+        '404':
+          description: Device not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                device_not_found:
+                  summary: Device Not Found
+                  description: Example response when device is not found
+                  value:
+                    error: "Device not found"
+                    code: "DEVICE_NOT_FOUND"
+                    details:
+                      field: "id"
+                      reason: "Device with specified ID does not exist"
+                      value: 999
+                    timestamp: "2024-01-15T10:30:00Z"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                server_error:
+                  summary: Server Error
+                  description: Example response when server error occurs
+                  value:
+                    error: "Internal server error"
+                    code: "INTERNAL_SERVER_ERROR"
+                    details:
+                      field: "system"
+                      reason: "Database connection failed"
+                    timestamp: "2024-01-15T10:30:00Z"
+
+    put:
+      summary: Update Device
+      description: Update device information
+      tags:
+        - Device Management
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Device ID
+          schema:
+            type: integer
+          example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceUpdate'
+      responses:
+        '200':
+          description: Device updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Device'
+              examples:
+                device_updated:
+                  summary: Device Updated
+                  description: Example response when device is updated successfully
+                  value:
+                    id: 1
+                    name: "Kitchen Temperature Sensor"
+                    type: "temperature"
+                    model: "DHT22"
+                    location: "Kitchen"
+                    status: "online"
+                    ip_address: "192.168.1.101"
+                    mac_address: "AA:BB:CC:DD:EE:FF"
+                    created_at: "2024-01-15T10:30:00Z"
+                    updated_at: "2024-01-15T10:30:00Z"
+        '400':
+          description: Bad request - invalid input data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                validation_error:
+                  summary: Validation Error
+                  description: Example response when validation fails
+                  value:
+                    error: "Invalid input data"
+                    code: "VALIDATION_ERROR"
+                    details:
+                      field: "ip_address"
+                      reason: "Invalid IP address format"
+                      value: "invalid-ip"
+                    timestamp: "2024-01-15T10:30:00Z"
+        '404':
+          description: Device not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                device_not_found:
+                  summary: Device Not Found
+                  description: Example response when device is not found
+                  value:
+                    error: "Device not found"
+                    code: "DEVICE_NOT_FOUND"
+                    details:
+                      field: "id"
+                      reason: "Device with specified ID does not exist"
+                      value: 999
+                    timestamp: "2024-01-15T10:30:00Z"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                server_error:
+                  summary: Server Error
+                  description: Example response when server error occurs
+                  value:
+                    error: "Internal server error"
+                    code: "INTERNAL_SERVER_ERROR"
+                    details:
+                      field: "system"
+                      reason: "Database connection failed"
+                    timestamp: "2024-01-15T10:30:00Z"
+
+  # Automation System
+  /automation/rules:
+    get:
+      summary: Get All Automation Rules
+      description: Retrieve all automation rules
+      tags:
+        - Automation
+      parameters:
+        - name: status
+          in: query
+          description: Filter by automation rule status
+          schema:
+            type: string
+          example: "active"
+        - name: type
+          in: query
+          description: Filter by automation rule type
+          schema:
+            type: string
+          example: "time_based"
+      responses:
+        '200':
+          description: Automation rules retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AutomationRule'
+              examples:
+                rules_list:
+                  summary: Automation Rules List
+                  description: Example response with list of automation rules
+                  value:
+                    - id: "550e8400-e29b-41d4-a716-446655440000"
+                      house_id: "550e8400-e29b-41d4-a716-446655440001"
+                      created_by: "550e8400-e29b-41d4-a716-446655440002"
+                      name: "Morning Routine"
+                      description: "Automatically adjust temperature and lighting at 7 AM"
+                      type: "time_based"
+                      status: "active"
+                      trigger_conditions:
+                        - type: "time"
+                          value: "0 7 * * *"
+                        - type: "sunrise"
+                          offset: "+30m"
+                      actions:
+                        - type: "set_temperature"
+                          device_id: "550e8400-e29b-41d4-a716-446655440003"
+                          value: 22
+                        - type: "set_lighting"
+                          device_id: "550e8400-e29b-41d4-a716-446655440004"
+                          brightness: 80
+                          color: "warm_white"
+                      schedule:
+                        cron: "0 7 * * *"
+                        timezone: "Europe/London"
+                      created_at: "2024-01-15T10:30:00Z"
+                      updated_at: "2024-01-15T10:30:00Z"
+                    - id: "550e8400-e29b-41d4-a716-446655440005"
+                      house_id: "550e8400-e29b-41d4-a716-446655440001"
+                      created_by: "550e8400-e29b-41d4-a716-446655440002"
+                      name: "Evening Security"
+                      description: "Activate security mode at sunset"
+                      type: "time_based"
+                      status: "active"
+                      trigger_conditions:
+                        - type: "time"
+                          value: "0 18 * * *"
+                        - type: "sunset"
+                          offset: "-30m"
+                      actions:
+                        - type: "activate_security"
+                          mode: "armed"
+                          devices: ["550e8400-e29b-41d4-a716-446655440006", "550e8400-e29b-41d4-a716-446655440007", "550e8400-e29b-41d4-a716-446655440008"]
+                        - type: "set_lighting"
+                          device_id: "550e8400-e29b-41d4-a716-446655440009"
+                          brightness: 100
+                          duration: 3600
+                      schedule:
+                        cron: "0 18 * * *"
+                        timezone: "Europe/London"
+                      created_at: "2024-01-15T10:30:00Z"
+                      updated_at: "2024-01-15T10:30:00Z"
+                    - id: "550e8400-e29b-41d4-a716-446655440010"
+                      house_id: "550e8400-e29b-41d4-a716-446655440001"
+                      created_by: "550e8400-e29b-41d4-a716-446655440002"
+                      name: "Motion Triggered Lighting"
+                      description: "Turn on lights when motion is detected"
+                      status: "active"
+                      trigger_conditions:
+                        - type: "motion"
+                          sensor_id: "550e8400-e29b-41d4-a716-446655440011"
+                          condition: "detected"
+                      actions:
+                        - type: "set_lighting"
+                          device_id: "550e8400-e29b-41d4-a716-446655440004"
+                          brightness: 100
+                          duration: 300
+                        - type: "send_notification"
+                          message: "Motion detected in living room"
+                          priority: "medium"
+                      created_at: "2024-01-15T10:30:00Z"
+                      updated_at: "2024-01-15T10:30:00Z"
+        '401':
+          description: Unauthorized - authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                unauthorized:
+                  summary: Unauthorized
+                  description: Example response when authentication is required
+                  value:
+                    error: "Authentication required"
+                    code: "UNAUTHORIZED"
+                    details:
+                      field: "authorization"
+                      reason: "Valid JWT token is required"
+                    timestamp: "2024-01-15T10:30:00Z"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                server_error:
+                  summary: Server Error
+                  description: Example response when server error occurs
+                  value:
+                    error: "Internal server error"
+                    code: "INTERNAL_SERVER_ERROR"
+                    details:
+                      field: "system"
+                      reason: "Database connection failed"
+                    timestamp: "2024-01-15T10:30:00Z"
+
+    post:
+      summary: Create New Automation Rule
+      description: Create a new automation rule
+      tags:
+        - Automation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AutomationRuleCreate'
+            examples:
+              morning_routine:
+                summary: Morning Routine
+                description: Automatically adjust temperature and lighting at 7 AM
+                value:
+                  house_id: "550e8400-e29b-41d4-a716-446655440001"
+                  name: "Morning Routine"
+                  description: "Automatically adjust temperature and lighting at 7 AM"
+                  trigger_conditions:
+                    - type: "time"
+                      value: "0 7 * * *"
+                    - type: "sunrise"
+                      offset: "+30m"
+                  actions:
+                    - type: "set_temperature"
+                      device_id: "550e8400-e29b-41d4-a716-446655440003"
+                      value: 22
+                    - type: "set_lighting"
+                      device_id: "550e8400-e29b-41d4-a716-446655440004"
+                      brightness: 80
+                      color: "warm_white"
+                  schedule:
+                    cron: "0 7 * * *"
+                    timezone: "Europe/London"
+              evening_security:
+                summary: Evening Security
+                description: Activate security mode at sunset
+                value:
+                  house_id: "550e8400-e29b-41d4-a716-446655440001"
+                  name: "Evening Security"
+                  description: "Activate security mode at sunset"
+                  trigger_conditions:
+                    - type: "time"
+                      value: "0 18 * * *"
+                    - type: "sunset"
+                      offset: "-30m"
+                  actions:
+                    - type: "activate_security"
+                      mode: "armed"
+                      devices: ["550e8400-e29b-41d4-a716-446655440006", "550e8400-e29b-41d4-a716-446655440007", "550e8400-e29b-41d4-a716-446655440008"]
+                    - type: "set_lighting"
+                      device_id: "550e8400-e29b-41d4-a716-446655440009"
+                      brightness: 100
+                      duration: 3600
+                  schedule:
+                    cron: "0 18 * * *"
+                    timezone: "Europe/London"
+              motion_triggered:
+                summary: Motion Triggered
+                description: Turn on lights when motion is detected
+                value:
+                  house_id: "550e8400-e29b-41d4-a716-446655440001"
+                  name: "Motion Triggered Lighting"
+                  description: "Turn on lights when motion is detected"
+                  trigger_conditions:
+                    - type: "motion"
+                      sensor_id: "550e8400-e29b-41d4-a716-446655440011"
+                      condition: "detected"
+                  actions:
+                    - type: "set_lighting"
+                      device_id: "550e8400-e29b-41d4-a716-446655440004"
+                      brightness: 100
+                      duration: 300
+                    - type: "send_notification"
+                      message: "Motion detected in living room"
+                      priority: "medium"
+      responses:
+        '201':
+          description: Automation Rule created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AutomationRule'
+              examples:
+                success_response:
+                  summary: Successful Automation Rule Creation
+                  description: Example response when automation rule is created successfully
+                  value:
+                    id: "550e8400-e29b-41d4-a716-446655440000"
+                    house_id: "550e8400-e29b-41d4-a716-446655440001"
+                    created_by: "550e8400-e29b-41d4-a716-446655440002"
+                    name: "Morning Routine"
+                    description: "Automatically adjust temperature and lighting at 7 AM"
+                    status: "active"
+                    trigger_conditions:
+                      - type: "time"
+                        value: "0 7 * * *"
+                      - type: "sunrise"
+                        offset: "+30m"
+                    actions:
+                      - type: "set_temperature"
+                        device_id: "550e8400-e29b-41d4-a716-446655440003"
+                        value: 22
+                      - type: "set_lighting"
+                        device_id: "550e8400-e29b-41d4-a716-446655440004"
+                        brightness: 80
+                        color: "warm_white"
+                    schedule:
+                      cron: "0 7 * * *"
+                      timezone: "Europe/London"
+                    created_at: "2024-01-15T10:30:00Z"
+                    updated_at: "2024-01-15T10:30:00Z"
+        '400':
+          description: Bad request - invalid input data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                validation_error:
+                  summary: Validation Error
+                  description: Example of validation error response
+                  value:
+                    error: "Invalid input data"
+                    code: "VALIDATION_ERROR"
+                    details:
+                      field: "trigger_conditions"
+                      reason: "At least one trigger condition is required"
+                      value: []
+                    timestamp: "2024-01-15T10:30:00Z"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /automation/rules/{id}:
+    get:
+      summary: Get Automation Rule by ID
+      description: Retrieve specific automation rule
+      tags:
+        - Automation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Automation Rule ID
+          schema:
+            type: string
+            format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Automation Rule retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AutomationRule'
+              examples:
+                rule_found:
+                  summary: Automation Rule Found
+                  description: Example response when automation rule is retrieved successfully
+                  value:
+                    id: "550e8400-e29b-41d4-a716-446655440000"
+                    house_id: "550e8400-e29b-41d4-a716-446655440001"
+                    created_by: "550e8400-e29b-41d4-a716-446655440002"
+                    name: "Morning Routine"
+                    description: "Automatically adjust temperature and lighting at 7 AM"
+                    status: "active"
+                    trigger_conditions:
+                      - type: "time"
+                        value: "0 7 * * *"
+                      - type: "sunrise"
+                        offset: "+30m"
+                    actions:
+                      - type: "set_temperature"
+                        device_id: "550e8400-e29b-41d4-a716-446655440003"
+                        value: 22
+                      - type: "set_lighting"
+                        device_id: "550e8400-e29b-41d4-a716-446655440004"
+                        brightness: 80
+                        color: "warm_white"
+                    schedule:
+                      cron: "0 7 * * *"
+                      timezone: "Europe/London"
+                    created_at: "2024-01-15T10:30:00Z"
+                    updated_at: "2024-01-15T10:30:00Z"
+        '404':
+          description: Automation Rule not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                rule_not_found:
+                  summary: Automation Rule Not Found
+                  description: Example response when automation rule is not found
+                  value:
+                    error: "Automation Rule not found"
+                    code: "AUTOMATION_RULE_NOT_FOUND"
+                    details:
+                      field: "id"
+                      reason: "Automation Rule with specified ID does not exist"
+                      value: "550e8400-e29b-41d4-a716-446655440999"
+                    timestamp: "2024-01-15T00:00:00Z"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                server_error:
+                  summary: Server Error
+                  description: Example response when server error occurs
+                  value:
+                    error: "Internal server error"
+                    code: "INTERNAL_SERVER_ERROR"
+                    details:
+                      field: "system"
+                      reason: "Database connection failed"
+                    timestamp: "2024-01-15T10:30:00Z"
+
+    put:
+      summary: Update Automation Rule
+      description: Update automation rule
+      tags:
+        - Automation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Automation Rule ID
+          schema:
+            type: string
+            format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AutomationRuleUpdate'
+      responses:
+        '200':
+          description: Automation Rule updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AutomationRule'
+              examples:
+                rule_updated:
+                  summary: Automation Rule Updated
+                  description: Example response when automation rule is updated successfully
+                  value:
+                    id: "550e8400-e29b-41d4-a716-446655440000"
+                    house_id: "550e8400-e29b-41d4-a716-446655440001"
+                    created_by: "550e8400-e29b-41d4-a716-446655440002"
+                    name: "Morning Routine Updated"
+                    description: "Updated morning routine with new settings"
+                    status: "active"
+                    trigger_conditions:
+                      - type: "time"
+                        value: "0 6 * * *"
+                    actions:
+                      - type: "set_temperature"
+                        device_id: "550e8400-e29b-41d4-a716-446655440003"
+                        value: 21
+                      - type: "set_lighting"
+                        device_id: "550e8400-e29b-41d4-a716-446655440004"
+                        brightness: 60
+                    created_at: "2024-01-15T10:30:00Z"
+                    updated_at: "2024-01-15T10:30:00Z"
+        '400':
+          description: Bad request - invalid input data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                validation_error:
+                  summary: Validation Error
+                  description: Example response when validation fails
+                  value:
+                    error: "Invalid input data"
+                    code: "VALIDATION_ERROR"
+                    details:
+                      field: "trigger_conditions"
+                      reason: "At least one trigger condition is required"
+                      value: []
+                    timestamp: "2024-01-15T10:30:00Z"
+        '404':
+          description: Automation Rule not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                rule_not_found:
+                  summary: Automation Rule Not Found
+                  description: Example response when automation rule is not found
+                  value:
+                    error: "Automation Rule not found"
+                    code: "AUTOMATION_RULE_NOT_FOUND"
+                    details:
+                      field: "id"
+                      reason: "Automation Rule with specified ID does not exist"
+                      value: "550e8400-e29b-41d4-a716-446655440999"
+                    timestamp: "2024-01-15T10:30:00Z"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                server_error:
+                  summary: Server Error
+                  description: Example response when server error occurs
+                  value:
+                    error: "Internal server error"
+                    code: "INTERNAL_SERVER_ERROR"
+                    details:
+                      field: "system"
+                      reason: "Database connection failed"
+                    timestamp: "2024-01-15T10:30:00Z"
+
+  # Security System
+  /security/cameras:
+    get:
+      summary: Get All Cameras
+      description: Retrieve all security cameras
+      tags:
+        - Security
+      parameters:
+        - name: status
+          in: query
+          description: Filter by camera status
+          schema:
+            type: string
+          example: "recording"
+        - name: location
+          in: query
+          description: Filter by camera location
+          schema:
+            type: string
+          example: "Front Door"
+      responses:
+        '200':
+          description: Cameras retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Camera'
+              examples:
+                cameras_list:
+                  summary: Cameras List
+                  description: Example response with list of security cameras
+                  value:
+                    - id: 1
+                      name: "Front Door Camera"
+                      location: "Front Door"
+                      status: "recording"
+                      ip_address: "192.168.1.200"
+                      rtsp_url: "rtsp://192.168.1.200:554/stream1"
+                      recording_enabled: true
+                      motion_detection: true
+                      created_at: "2024-01-15T10:30:00Z"
+                      updated_at: "2024-01-15T10:30:00Z"
+                    - id: 2
+                      name: "Backyard Camera"
+                      location: "Backyard"
+                      status: "streaming"
+                      ip_address: "192.168.1.201"
+                      rtsp_url: "rtsp://192.168.1.201:554/stream1"
+                      recording_enabled: true
+                      motion_detection: true
+                      created_at: "2024-01-15T10:30:00Z"
+                      updated_at: "2024-01-15T10:30:00Z"
+                    - id: 3
+                      name: "Garage Camera"
+                      location: "Garage"
+                      status: "offline"
+                      ip_address: "192.168.1.202"
+                      rtsp_url: "rtsp://192.168.1.202:554/stream1"
+                      recording_enabled: false
+                      motion_detection: true
+                      created_at: "2024-01-15T10:30:00Z"
+                      updated_at: "2024-01-15T10:30:00Z"
+        '401':
+          description: Unauthorized - authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                unauthorized:
+                  summary: Unauthorized
+                  description: Example response when authentication is required
+                  value:
+                    error: "Authentication required"
+                    code: "UNAUTHORIZED"
+                    details:
+                      field: "authorization"
+                      reason: "Valid JWT token is required"
+                    timestamp: "2024-01-15T10:30:00Z"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                server_error:
+                  summary: Server Error
+                  description: Example response when server error occurs
+                  value:
+                    error: "Internal server error"
+                    code: "INTERNAL_SERVER_ERROR"
+                    details:
+                      field: "system"
+                      reason: "Database connection failed"
+                    timestamp: "2024-01-15T10:30:00Z"
+
+    post:
+      summary: Create New Camera
+      description: Register a new security camera
+      tags:
+        - Security
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CameraCreate'
+            examples:
+              front_door_camera:
+                summary: Front Door Camera
+                description: Example of creating a front door security camera
+                value:
+                  name: "Front Door Camera"
+                  location: "Front Door"
+                  ip_address: "192.168.1.200"
+                  rtsp_url: "rtsp://192.168.1.200:554/stream1"
+                  recording_enabled: true
+                  motion_detection: true
+              backyard_camera:
+                summary: Backyard Camera
+                description: Example of creating a backyard security camera
+                value:
+                  name: "Backyard Camera"
+                  location: "Backyard"
+                  ip_address: "192.168.1.201"
+                  rtsp_url: "rtsp://192.168.1.201:554/stream1"
+                  recording_enabled: true
+                  motion_detection: true
+              garage_camera:
+                summary: Garage Camera
+                description: Example of creating a garage security camera
+                value:
+                  name: "Garage Camera"
+                  location: "Garage"
+                  ip_address: "192.168.1.202"
+                  rtsp_url: "rtsp://192.168.1.202:554/stream1"
+                  recording_enabled: false
+                  motion_detection: true
+      responses:
+        '201':
+          description: Camera created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Camera'
+              examples:
+                success_response:
+                  summary: Successful Camera Creation
+                  description: Example response when camera is created successfully
+                  value:
+                    id: 1
+                    name: "Front Door Camera"
+                    location: "Front Door"
+                    status: "online"
+                    ip_address: "192.168.1.200"
+                    rtsp_url: "rtsp://192.168.1.200:554/stream1"
+                    recording_enabled: true
+                    motion_detection: true
+                    created_at: "2024-01-15T10:30:00Z"
+                    updated_at: "2024-01-15T10:30:00Z"
+        '400':
+          description: Bad request - invalid input data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                validation_error:
+                  summary: Validation Error
+                  description: Example of validation error response
+                  value:
+                    error: "Invalid input data"
+                    code: "VALIDATION_ERROR"
+                    details:
+                      field: "ip_address"
+                      reason: "Invalid IP address format"
+                      value: "invalid-ip"
+                    timestamp: "2024-01-15T10:30:00Z"
+        '401':
+          description: Unauthorized - authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                unauthorized:
+                  summary: Unauthorized
+                  description: Example response when authentication is required
+                  value:
+                    error: "Authentication required"
+                    code: "UNAUTHORIZED"
+                    details:
+                      field: "authorization"
+                      reason: "Valid JWT token is required"
+                    timestamp: "2024-01-15T10:30:00Z"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                server_error:
+                  summary: Server Error
+                  description: Example response when server error occurs
+                  value:
+                    error: "Internal server error"
+                    code: "INTERNAL_SERVER_ERROR"
+                    details:
+                      field: "system"
+                      reason: "Database connection failed"
+                    timestamp: "2024-01-15T10:30:00Z"
+
+  /security/cameras/{id}:
+    get:
+      summary: Get Camera by ID
+      description: Retrieve specific camera information
+      tags:
+        - Security
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Camera ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Camera retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Camera'
+              examples:
+                camera_found:
+                  summary: Camera Found
+                  description: Example response when camera is retrieved successfully
+                  value:
+                    id: 1
+                    name: "Front Door Camera"
+                    location: "Front Door"
+                    status: "recording"
+                    ip_address: "192.168.1.200"
+                    rtsp_url: "rtsp://192.168.1.200:554/stream1"
+                    recording_enabled: true
+                    motion_detection: true
+                    created_at: "2024-01-15T10:30:00Z"
+                    updated_at: "2024-01-15T10:30:00Z"
+        '404':
+          description: Camera not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                camera_not_found:
+                  summary: Camera Not Found
+                  description: Example response when camera is not found
+                  value:
+                    error: "Camera not found"
+                    code: "CAMERA_NOT_FOUND"
+                    details:
+                      field: "id"
+                      reason: "Camera with specified ID does not exist"
+                      value: 999
+                    timestamp: "2024-01-15T10:30:00Z"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                server_error:
+                  summary: Server Error
+                  description: Example response when server error occurs
+                  value:
+                    error: "Internal server error"
+                    code: "INTERNAL_SERVER_ERROR"
+                    details:
+                      field: "system"
+                      reason: "Database connection failed"
+                    timestamp: "2024-01-15T10:30:00Z"
+
+    put:
+      summary: Update Camera
+      description: Update camera information
+      tags:
+        - Security
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Camera ID
+          schema:
+            type: integer
+          example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CameraUpdate'
+      responses:
+        '200':
+          description: Camera updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Camera'
+              examples:
+                camera_updated:
+                  summary: Camera Updated
+                  description: Example response when camera is updated successfully
+                  value:
+                    id: 1
+                    name: "Front Door Camera"
+                    location: "Front Door"
+                    status: "recording"
+                    ip_address: "192.168.1.200"
+                    rtsp_url: "rtsp://192.168.1.200:554/stream1"
+                    recording_enabled: true
+                    motion_detection: true
+                    created_at: "2024-01-15T10:30:00Z"
+                    updated_at: "2024-01-15T10:30:00Z"
+        '400':
+          description: Bad request - invalid input data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                validation_error:
+                  summary: Validation Error
+                  description: Example response when validation fails
+                  value:
+                    error: "Invalid input data"
+                    code: "VALIDATION_ERROR"
+                    details:
+                      field: "ip_address"
+                      reason: "Invalid IP address format"
+                      value: "invalid-ip"
+                    timestamp: "2024-01-15T10:30:00Z"
+        '404':
+          description: Camera not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                camera_not_found:
+                  summary: Camera Not Found
+                  description: Example response when camera is not found
+                  value:
+                    error: "Camera not found"
+                    code: "CAMERA_NOT_FOUND"
+                    details:
+                      field: "id"
+                      reason: "Camera with specified ID does not exist"
+                      value: 999
+                    timestamp: "2024-01-15T10:30:00Z"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                server_error:
+                  summary: Server Error
+                  description: Example response when server error occurs
+                  value:
+                    error: "Internal server error"
+                    code: "INTERNAL_SERVER_ERROR"
+                    details:
+                      field: "system"
+                      reason: "Database connection failed"
+                    timestamp: "2024-01-15T10:30:00Z"
+
+  # Authentication Service
+  /auth/login:
+    post:
+      summary: User Login
+      description: Authenticate user and return JWT token
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            examples:
+              standard_login:
+                summary: Standard Login
+                description: Example of standard user login
+                value:
+                  username: "john.doe@warmhome.com"
+                  password: "securePassword123"
+              admin_login:
+                summary: Admin Login
+                description: Example of admin user login
+                value:
+                  username: "admin@warmhome.com"
+                  password: "adminSecurePass456"
+              partner_login:
+                summary: Partner Login
+                description: Example of partner user login
+                value:
+                  username: "partner@techcorp.com"
+                  password: "partnerAccess789"
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+              examples:
+                success_response:
+                  summary: Successful Login
+                  description: Example response when login is successful
+                  value:
+                    access_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+                    refresh_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+                    expires_in: 3600
+                    token_type: "Bearer"
+                    user:
+                      id: 1
+                      username: "john.doe"
+                      email: "john.doe@warmhome.com"
+                      first_name: "John"
+                      last_name: "Doe"
+                      role: "user"
+                      created_at: "2024-01-15T10:30:00Z"
+        '400':
+          description: Bad request - invalid input data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                validation_error:
+                  summary: Validation Error
+                  description: Example of validation error response
+                  value:
+                    error: "Invalid input data"
+                    code: "VALIDATION_ERROR"
+                    details:
+                      field: "username"
+                      reason: "Username is required"
+                      value: ""
+                    timestamp: "2024-01-15T10:30:00Z"
+        '401':
+          description: Unauthorized - invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                invalid_credentials:
+                  summary: Invalid Credentials
+                  description: Example response when credentials are invalid
+                  value:
+                    error: "Invalid username or password"
+                    code: "INVALID_CREDENTIALS"
+                    details:
+                      field: "credentials"
+                      reason: "Username or password is incorrect"
+                    timestamp: "2024-01-15T10:30:00Z"
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /auth/refresh:
+    post:
+      summary: Refresh Token
+      description: Refresh JWT token
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+            examples:
+              refresh_token:
+                summary: Refresh Token
+                description: Example of refreshing JWT token
+                value:
+                  refresh_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+              examples:
+                token_refreshed:
+                  summary: Token Refreshed
+                  description: Example response when token is refreshed successfully
+                  value:
+                    access_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+                    refresh_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+                    expires_in: 3600
+                    token_type: "Bearer"
+                    user:
+                      id: 1
+                      username: "john.doe"
+                      email: "john.doe@warmhome.com"
+                      first_name: "John"
+                      last_name: "Doe"
+                      role: "user"
+                      created_at: "2024-01-15T10:30:00Z"
+        '400':
+          description: Bad request - invalid refresh token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                invalid_refresh_token:
+                  summary: Invalid Refresh Token
+                  description: Example response when refresh token is invalid
+                  value:
+                    error: "Invalid refresh token"
+                    code: "INVALID_REFRESH_TOKEN"
+                    details:
+                      field: "refresh_token"
+                      reason: "Refresh token is malformed or invalid"
+                    timestamp: "2024-01-15T10:30:00Z"
+        '401':
+          description: Unauthorized - expired refresh token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                expired_refresh_token:
+                  summary: Expired Refresh Token
+                  description: Example response when refresh token has expired
+                  value:
+                    error: "Refresh token expired"
+                    code: "REFRESH_TOKEN_EXPIRED"
+                    details:
+                      field: "refresh_token"
+                      reason: "Refresh token has expired, user must login again"
+                    timestamp: "2024-01-15T10:30:00Z"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                server_error:
+                  summary: Server Error
+                  description: Example response when server error occurs
+                  value:
+                    error: "Internal server error"
+                    code: "INTERNAL_SERVER_ERROR"
+                    details:
+                      field: "system"
+                      reason: "Database connection failed"
+                    timestamp: "2024-01-15T10:30:00Z"
+
+  /auth/logout:
+    post:
+      summary: User Logout
+      description: Invalidate JWT token
+      tags:
+        - Authentication
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Logout successful"
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: "2024-01-15T10:30:00Z"
+              examples:
+                logout_success:
+                  summary: Logout Success
+                  description: Example response when logout is successful
+                  value:
+                    message: "Logout successful"
+                    timestamp: "2024-01-15T10:30:00Z"
+        '401':
+          description: Unauthorized - invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                invalid_token:
+                  summary: Invalid Token
+                  description: Example response when token is invalid
+                  value:
+                    error: "Invalid or expired token"
+                    code: "INVALID_TOKEN"
+                    details:
+                      field: "authorization"
+                      reason: "JWT token is invalid or has expired"
+                    timestamp: "2024-01-15T10:30:00Z"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                server_error:
+                  summary: Server Error
+                  description: Example response when server error occurs
+                  value:
+                    error: "Internal server error"
+                    code: "INTERNAL_SERVER_ERROR"
+                    details:
+                      field: "system"
+                      reason: "Database connection failed"
+                    timestamp: "2024-01-15T10:30:00Z"
+
+  /auth/profile:
+    get:
+      summary: Get User Profile
+      description: Retrieve current user profile information
+      tags:
+        - Authentication
+      responses:
+        '200':
+          description: Profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+              examples:
+                user_profile:
+                  summary: User Profile
+                  description: Example response with user profile information
+                  value:
+                    id: 1
+                    username: "john.doe"
+                    email: "john.doe@warmhome.com"
+                    first_name: "John"
+                    last_name: "Doe"
+                    role: "user"
+                    created_at: "2024-01-15T10:30:00Z"
+                admin_profile:
+                  summary: Admin Profile
+                  description: Example response with admin user profile
+                  value:
+                    id: 2
+                    username: "admin"
+                    email: "admin@warmhome.com"
+                    first_name: "Admin"
+                    last_name: "User"
+                    role: "admin"
+                    created_at: "2024-01-15T10:30:00Z"
+                partner_profile:
+                  summary: Partner Profile
+                  description: Example response with partner user profile
+                  value:
+                    id: 3
+                    username: "partner.tech"
+                    email: "partner@techcorp.com"
+                    first_name: "Tech"
+                    last_name: "Partner"
+                    role: "partner"
+                    created_at: "2024-01-15T10:30:00Z"
+        '401':
+          description: Unauthorized - authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                unauthorized:
+                  summary: Unauthorized
+                  description: Example response when authentication is required
+                  value:
+                    error: "Authentication required"
+                    code: "UNAUTHORIZED"
+                    details:
+                      field: "authorization"
+                      reason: "Valid JWT token is required"
+                    timestamp: "2024-01-15T10:30:00Z"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                server_error:
+                  summary: Server Error
+                  description: Example response when server error occurs
+                  value:
+                    error: "Internal server error"
+                    code: "INTERNAL_SERVER_ERROR"
+                    details:
+                      field: "system"
+                      reason: "Database connection failed"
+                    timestamp: "2024-01-15T10:30:00Z"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+  schemas:
+    # Common schemas
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "Invalid input data"
+        code:
+          type: string
+          description: Error code
+          example: "VALIDATION_ERROR"
+        details:
+          type: object
+          description: Additional error details
+          example:
+            field: "email"
+            reason: "Invalid email format"
+            value: "invalid-email"
+
+    # Timeseries schemas
+    TimeseriesData:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique identifier
+          example: 1
+        sensor_id:
+          type: integer
+          description: Associated sensor ID
+          example: 5
+        value:
+          type: number
+          description: Measured value
+          example: 22.5
+        unit:
+          type: string
+          description: Unit of measurement
+          example: "°C"
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of measurement
+          example: "2024-01-15T10:30:00Z"
+        metadata:
+          type: object
+          description: Additional metadata
+          example:
+            humidity: 45.2
+            battery_level: 85
+            signal_strength: "strong"
+
+    TimeseriesDataCreate:
+      type: object
+      required:
+        - sensor_id
+        - value
+        - timestamp
+      properties:
+        sensor_id:
+          type: integer
+          description: Associated sensor ID
+          example: 5
+        value:
+          type: number
+          description: Measured value
+          example: 22.5
+        unit:
+          type: string
+          description: Unit of measurement
+          example: "°C"
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of measurement
+          example: "2024-01-15T10:30:00Z"
+        metadata:
+          type: object
+          description: Additional metadata
+          example:
+            humidity: 45.2
+            battery_level: 85
+            signal_strength: "strong"
+
+    # Device schemas
+    Device:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        house_id:
+          type: string
+          format: uuid
+          description: Associated house ID
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        device_type_id:
+          type: string
+          format: uuid
+          description: Associated device type ID
+          example: "550e8400-e29b-41d4-a716-446655440002"
+        name:
+          type: string
+          description: Device name
+          example: "Living Room Temperature Sensor"
+        serial_number:
+          type: string
+          description: Device serial number
+          example: "SN123456789"
+        model:
+          type: string
+          description: Device model
+          example: "DHT22"
+        manufacturer:
+          type: string
+          description: Device manufacturer
+          example: "DHT"
+        location:
+          type: string
+          description: Device location
+          example: "Living Room"
+        status:
+          type: string
+          enum: [online, offline, error, maintenance]
+          description: Device status
+          example: "online"
+        ip_address:
+          type: string
+          description: Device IP address
+          example: "192.168.1.100"
+        mac_address:
+          type: string
+          description: Device MAC address
+          example: "AA:BB:CC:DD:EE:FF"
+        last_seen:
+          type: string
+          format: date-time
+          description: Last time device was seen
+          example: "2024-01-15T10:30:00Z"
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: "2024-01-15T10:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: "2024-01-15T10:30:00Z"
+
+    DeviceCreate:
+      type: object
+      required:
+        - name
+        - house_id
+        - device_type_id
+        - location
+      properties:
+        house_id:
+          type: string
+          format: uuid
+          description: Associated house ID
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        device_type_id:
+          type: string
+          format: uuid
+          description: Associated device type ID
+          example: "550e8400-e29b-41d4-a716-446655440002"
+        name:
+          type: string
+          description: Device name
+          example: "Kitchen Temperature Sensor"
+        serial_number:
+          type: string
+          description: Device serial number
+          example: "SN123456789"
+        model:
+          type: string
+          description: Device model
+          example: "DHT22"
+        manufacturer:
+          type: string
+          description: Device manufacturer
+          example: "DHT"
+        location:
+          type: string
+          description: Device location
+          example: "Kitchen"
+        ip_address:
+          type: string
+          description: Device IP address
+          example: "192.168.1.101"
+        mac_address:
+          type: string
+          description: Device MAC address
+          example: "AA:BB:CC:DD:EE:FF"
+
+    DeviceUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Device name
+        serial_number:
+          type: string
+          description: Device serial number
+        model:
+          type: string
+          description: Device model
+        manufacturer:
+          type: string
+          description: Device manufacturer
+        location:
+          type: string
+          description: Device location
+        status:
+          type: string
+          enum: [online, offline, error, maintenance]
+          description: Device status
+        ip_address:
+          type: string
+          description: Device IP address
+        mac_address:
+          type: string
+          description: Device MAC address
+
+    # Automation schemas (removed old Scenario schemas - replaced with AutomationRule)
+
+    # Security schemas
+    Camera:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique identifier
+          example: 1
+        name:
+          type: string
+          description: Camera name
+          example: "Front Door Camera"
+        location:
+          type: string
+          description: Camera location
+          example: "Front Door"
+        status:
+          type: string
+          description: Camera status
+          example: "recording"
+        ip_address:
+          type: string
+          description: Camera IP address
+          example: "192.168.1.200"
+        rtsp_url:
+          type: string
+          description: RTSP stream URL
+          example: "rtsp://192.168.1.200:554/stream1"
+        recording_enabled:
+          type: boolean
+          description: Whether recording is enabled
+          example: true
+        motion_detection:
+          type: boolean
+          description: Whether motion detection is enabled
+          example: true
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: "2024-01-15T10:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: "2024-01-15T10:30:00Z"
+
+    CameraCreate:
+      type: object
+      required:
+        - name
+        - location
+        - ip_address
+      properties:
+        name:
+          type: string
+          description: Camera name
+          example: "Backyard Camera"
+        location:
+          type: string
+          description: Camera location
+          example: "Backyard"
+        ip_address:
+          type: string
+          description: Camera IP address
+          example: "192.168.1.201"
+        rtsp_url:
+          type: string
+          description: RTSP stream URL
+          example: "rtsp://192.168.1.201:554/stream1"
+        recording_enabled:
+          type: boolean
+          description: Whether recording is enabled
+          example: true
+        motion_detection:
+          type: boolean
+          description: Whether motion detection is enabled
+          example: true
+
+    CameraUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Camera name
+        location:
+          type: string
+          description: Camera location
+        status:
+          type: string
+          description: Camera status
+        ip_address:
+          type: string
+          description: Camera IP address
+        rtsp_url:
+          type: string
+          description: RTSP stream URL
+        recording_enabled:
+          type: boolean
+          description: Whether recording is enabled
+        motion_detection:
+          type: boolean
+          description: Whether motion detection is enabled
+
+    # Authentication schemas
+    LoginRequest:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          description: Username or email
+          example: "john.doe@warmhome.com"
+        password:
+          type: string
+          description: User password
+          example: "securePassword123"
+
+    LoginResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+          description: JWT access token
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+        refresh_token:
+          type: string
+          description: JWT refresh token
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+        expires_in:
+          type: integer
+          description: Token expiration time in seconds
+          example: 3600
+        token_type:
+          type: string
+          description: Token type (Bearer)
+          example: "Bearer"
+        user:
+          $ref: '#/components/schemas/UserProfile'
+
+    RefreshRequest:
+      type: object
+      required:
+        - refresh_token
+      properties:
+        refresh_token:
+          type: string
+          description: JWT refresh token
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: User ID
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        role_id:
+          type: string
+          format: uuid
+          description: User role ID
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        username:
+          type: string
+          description: Username
+          example: "john.doe"
+        email:
+          type: string
+          description: User email
+          example: "john.doe@warmhome.com"
+        password_hash:
+          type: string
+          description: Hashed password (not returned in responses)
+          example: "$2a$10$hashedpassword"
+        first_name:
+          type: string
+          description: First name
+          example: "John"
+        last_name:
+          type: string
+          description: Last name
+          example: "Doe"
+        phone:
+          type: string
+          description: Phone number
+          example: "+1234567890"
+        status:
+          type: string
+          enum: [active, inactive, suspended]
+          description: User status
+          example: "active"
+        created_at:
+          type: string
+          format: date-time
+          description: Account creation timestamp
+          example: "2024-01-15T10:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: "2024-01-15T10:30:00Z"
+
+    # House schemas
+    House:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        owner_id:
+          type: string
+          format: uuid
+          description: House owner user ID
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        name:
+          type: string
+          description: House name
+          example: "My Smart Home"
+        address:
+          type: string
+          description: House address
+          example: "123 Smart Street"
+        city:
+          type: string
+          description: City
+          example: "Smart City"
+        country:
+          type: string
+          description: Country
+          example: "Smart Country"
+        postal_code:
+          type: string
+          description: Postal code
+          example: "12345"
+        timezone:
+          type: string
+          description: Timezone
+          example: "Europe/London"
+        status:
+          type: string
+          enum: [active, inactive, maintenance]
+          description: House status
+          example: "active"
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: "2024-01-15T10:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: "2024-01-15T10:30:00Z"
+
+    HouseCreate:
+      type: object
+      required:
+        - name
+        - address
+        - city
+        - country
+      properties:
+        name:
+          type: string
+          description: House name
+          example: "My Smart Home"
+        address:
+          type: string
+          description: House address
+          example: "123 Smart Street"
+        city:
+          type: string
+          description: City
+          example: "Smart City"
+        country:
+          type: string
+          description: Country
+          example: "Smart Country"
+        postal_code:
+          type: string
+          description: Postal code
+          example: "12345"
+        timezone:
+          type: string
+          description: Timezone
+          example: "Europe/London"
+
+    HouseUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          description: House name
+        address:
+          type: string
+          description: House address
+        city:
+          type: string
+          description: City
+        country:
+          type: string
+          description: Country
+        postal_code:
+          type: string
+          description: Postal code
+        timezone:
+          type: string
+          description: Timezone
+        status:
+          type: string
+          enum: [active, inactive, maintenance]
+          description: House status
+
+    # Device Type schemas
+    DeviceType:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        name:
+          type: string
+          description: Device type name
+          example: "Temperature Sensor"
+        category:
+          type: string
+          enum: [sensor, actuator, hvac, lighting]
+          description: Device category
+          example: "sensor"
+        capabilities:
+          type: object
+          description: Device capabilities as JSON
+          example:
+            temperature_range: [-40, 125]
+            accuracy: "±0.5°C"
+            protocol: "MQTT"
+        protocol:
+          type: string
+          description: Communication protocol
+          example: "MQTT"
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: "2024-01-15T10:30:00Z"
+
+    DeviceTypeCreate:
+      type: object
+      required:
+        - name
+        - category
+      properties:
+        name:
+          type: string
+          description: Device type name
+          example: "Motion Sensor"
+        category:
+          type: string
+          enum: [sensor, actuator, hvac, lighting]
+          description: Device category
+          example: "sensor"
+        capabilities:
+          type: object
+          description: Device capabilities as JSON
+          example:
+            detection_range: "10m"
+            sensitivity: "high"
+        protocol:
+          type: string
+          description: Communication protocol
+          example: "Zigbee"
+
+    # Role schemas
+    Role:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        name:
+          type: string
+          description: Role name
+          example: "admin"
+        description:
+          type: string
+          description: Role description
+          example: "Full system access"
+        permissions:
+          type: object
+          description: Role permissions as JSON
+          example:
+            devices: ["read", "write", "delete"]
+            automation: ["read", "write"]
+            security: ["read"]
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: "2024-01-15T10:30:00Z"
+
+    RoleCreate:
+      type: object
+      required:
+        - name
+        - description
+      properties:
+        name:
+          type: string
+          description: Role name
+          example: "member"
+        description:
+          type: string
+          description: Role description
+          example: "Limited access to assigned devices"
+        permissions:
+          type: object
+          description: Role permissions as JSON
+          example:
+            devices: ["read"]
+            automation: ["read"]
+
+    # House Member schemas
+    HouseMember:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        house_id:
+          type: string
+          format: uuid
+          description: Associated house ID
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        user_id:
+          type: string
+          format: uuid
+          description: Associated user ID
+          example: "550e8400-e29b-41d4-a716-446655440002"
+        access_level:
+          type: string
+          enum: [owner, admin, member, guest]
+          description: Access level
+          example: "member"
+        invited_at:
+          type: string
+          format: date-time
+          description: Invitation timestamp
+          example: "2024-01-15T10:30:00Z"
+        invited_by:
+          type: string
+          format: uuid
+          description: User who sent invitation
+          example: "550e8400-e29b-41d4-a716-446655440003"
+        status:
+          type: string
+          enum: [pending, active, revoked]
+          description: Membership status
+          example: "active"
+
+    HouseMemberCreate:
+      type: object
+      required:
+        - house_id
+        - user_id
+        - access_level
+      properties:
+        house_id:
+          type: string
+          format: uuid
+          description: Associated house ID
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        user_id:
+          type: string
+          format: uuid
+          description: Associated user ID
+          example: "550e8400-e29b-41d4-a716-446655440002"
+        access_level:
+          type: string
+          enum: [owner, admin, member, guest]
+          description: Access level
+          example: "member"
+
+    # Automation Rule schemas (renamed from Scenario)
+    AutomationRule:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        house_id:
+          type: string
+          format: uuid
+          description: Associated house ID
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        created_by:
+          type: string
+          format: uuid
+          description: User who created the rule
+          example: "550e8400-e29b-41d4-a716-446655440002"
+        name:
+          type: string
+          description: Rule name
+          example: "Morning Routine"
+        description:
+          type: string
+          description: Rule description
+          example: "Automatically adjust temperature and lighting at 7 AM"
+        trigger_conditions:
+          type: array
+          items:
+            type: object
+          description: Trigger conditions as JSON
+          example:
+            - type: "time"
+              value: "0 7 * * *"
+            - type: "motion"
+              sensor_id: "550e8400-e29b-41d4-a716-446655440003"
+        actions:
+          type: array
+          items:
+            type: object
+          description: Actions to execute as JSON
+          example:
+            - type: "set_temperature"
+              device_id: "550e8400-e29b-41d4-a716-446655440004"
+              value: 22
+            - type: "set_lighting"
+              device_id: "550e8400-e29b-41d4-a716-446655440005"
+              brightness: 80
+        schedule:
+          type: object
+          description: Schedule configuration as JSON
+          example:
+            cron: "0 7 * * *"
+            timezone: "Europe/London"
+        status:
+          type: string
+          enum: [active, inactive, draft]
+          description: Rule status
+          example: "active"
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: "2024-01-15T10:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: "2024-01-15T10:30:00Z"
+
+    AutomationRuleCreate:
+      type: object
+      required:
+        - name
+        - house_id
+        - trigger_conditions
+        - actions
+      properties:
+        house_id:
+          type: string
+          format: uuid
+          description: Associated house ID
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        name:
+          type: string
+          description: Rule name
+          example: "Evening Security"
+        description:
+          type: string
+          description: Rule description
+          example: "Activate security mode at sunset"
+        trigger_conditions:
+          type: array
+          items:
+            type: object
+          description: Trigger conditions as JSON
+          example:
+            - type: "time"
+              value: "0 18 * * *"
+            - type: "sunset"
+              offset: "-30m"
+        actions:
+          type: array
+          items:
+            type: object
+          description: Actions to execute as JSON
+          example:
+            - type: "activate_security"
+              mode: "armed"
+            - type: "set_lighting"
+              device_id: "550e8400-e29b-41d4-a716-446655440005"
+              brightness: 100
+        schedule:
+          type: object
+          description: Schedule configuration as JSON
+          example:
+            cron: "0 18 * * *"
+            timezone: "Europe/London"
+
+    AutomationRuleUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Rule name
+        description:
+          type: string
+          description: Rule description
+        trigger_conditions:
+          type: array
+          items:
+            type: object
+          description: Trigger conditions as JSON
+        actions:
+          type: array
+          items:
+            type: object
+          description: Actions to execute as JSON
+        schedule:
+          type: object
+          description: Schedule configuration as JSON
+        status:
+          type: string
+          enum: [active, inactive, draft]
+          description: Rule status
+
+    # Security Event schemas
+    SecurityEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        house_id:
+          type: string
+          format: uuid
+          description: Associated house ID
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        user_id:
+          type: string
+          format: uuid
+          description: Associated user ID (if applicable)
+          example: "550e8400-e29b-41d4-a716-446655440002"
+        device_id:
+          type: string
+          format: uuid
+          description: Associated device ID (if applicable)
+          example: "550e8400-e29b-41d4-a716-446655440003"
+        event_type:
+          type: string
+          enum: [access_granted, access_denied, intrusion_detected, device_offline, suspicious_activity]
+          description: Event type
+          example: "intrusion_detected"
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+          description: Event severity
+          example: "high"
+        description:
+          type: string
+          description: Event description
+          example: "Motion detected in restricted area"
+        metadata:
+          type: object
+          description: Additional metadata as JSON
+          example:
+            location: "Back Door"
+            confidence: 0.95
+            image_url: "https://example.com/alert.jpg"
+        occurred_at:
+          type: string
+          format: date-time
+          description: When event occurred
+          example: "2024-01-15T10:30:00Z"
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: "2024-01-15T10:30:00Z"
+
+    SecurityEventCreate:
+      type: object
+      required:
+        - house_id
+        - event_type
+        - severity
+        - description
+      properties:
+        house_id:
+          type: string
+          format: uuid
+          description: Associated house ID
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        user_id:
+          type: string
+          format: uuid
+          description: Associated user ID (if applicable)
+          example: "550e8400-e29b-41d4-a716-446655440002"
+        device_id:
+          type: string
+          format: uuid
+          description: Associated device ID (if applicable)
+          example: "550e8400-e29b-41d4-a716-446655440003"
+        event_type:
+          type: string
+          enum: [access_granted, access_denied, intrusion_detected, device_offline, suspicious_activity]
+          description: Event type
+          example: "access_denied"
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+          description: Event severity
+          example: "medium"
+        description:
+          type: string
+          description: Event description
+          example: "Failed login attempt"
+        metadata:
+          type: object
+          description: Additional metadata as JSON
+          example:
+            ip_address: "192.168.1.100"
+            user_agent: "Mozilla/5.0..."
+
+  responses:
+    BadRequest:
+      description: Bad request - invalid input data
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Unauthorized - authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+tags:
+  - name: Monitoring
+    description: Timeseries data and monitoring endpoints
+  - name: Device Management
+    description: Device registration and management endpoints
+  - name: Automation
+    description: Automation rules and scheduling endpoints
+  - name: Security
+    description: Security cameras and access control endpoints
+  - name: Authentication
+    description: User authentication and authorization endpoints

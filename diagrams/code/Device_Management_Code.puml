@@ -1,0 +1,195 @@
+@startuml
+title WarmHome Device Management Code Diagram
+
+top to bottom direction
+
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+' Layout
+skinparam nodesep 40
+skinparam ranksep 50
+
+skinparam classAttributeIconSize 0
+skinparam classFontSize 10
+skinparam classFontName Arial
+skinparam roundcorner 15
+
+class BaseEntity {
+  +UUID id
+  +String status
+  +Timestamp created_at
+  +Timestamp updated_at
+}
+
+class BaseDevice {
+  +String name
+  +String serial_number
+  +String model
+  +String manufacturer
+  +String ip_address
+  +String mac_address
+  +Timestamp last_seen
+  +DeviceStatus get_status()
+}
+
+class DeviceManager {
+  +List<Device> devices
+  +Device get_device(UUID device_id)
+  +List<Device> get_devices_by_house(UUID house_id)
+  +boolean register_device(Device device)
+}
+
+class Device {
+  +UUID house_id
+  +UUID device_type_id
+  +Dict configuration
+  +String description
+  +boolean send_command(DeviceCommand command, Connection connection)
+}
+
+class DeviceType {
+  +String name
+  +DeviceCategory category
+  +String description
+  +List<String> capabilities
+  +List<String> get_capabilities()
+}
+
+class ConnectionHandler {
+  +Map<UUID, Connection> active_connections
+  +Connection get_connection_for_device(UUID device_id)
+  +Connection get_connection_status(UUID device_id)
+  +ConnectionStatus get_connection_status_enum(UUID device_id)
+  +boolean ensure_connection(UUID device_id)
+}
+
+class DeviceAPIHandler {
+  +List<String> api_endpoints
+  +String api_version
+  +Map<String, String> authentication_tokens
+  +DeviceResponse handle_device_request(DeviceRequest request)
+  +boolean authenticate_device(UUID device_id)
+  +DeviceResponse create_error_response(String error_message)
+  +DeviceCommand create_command_from_request(DeviceRequest request)
+}
+
+class DeviceCommandProcessor {
+  +Map<String, String> command_templates
+  +List<String> supported_commands
+  +Map<UUID, DeviceCommand> command_history
+  +boolean validate_command(DeviceCommand command, DeviceType device_type)
+  +boolean execute_command(DeviceCommand command, UUID device_id)
+  +void notify_execution_result(DeviceCommand command, boolean success)
+  +DeviceCommand create_command_from_template(String template_name, Dict parameters)
+}
+
+class Connection {
+  +UUID device_id
+  +String connection_type
+  +Timestamp established_at
+  +boolean transmit(DeviceCommand command)
+  +boolean is_active()
+  +void close()
+}
+
+class DeviceCommand {
+  +String command_type
+  +Dict parameters
+  +Timestamp timestamp
+  +Priority priority
+}
+
+class DeviceRequest {
+  +String request_type
+  +UUID device_id
+  +Dict parameters
+  +Timestamp timestamp
+}
+
+class DeviceResponse {
+  +boolean success
+  +Dict data
+  +String error_message
+  +Timestamp timestamp
+}
+
+enum DeviceStatus {
+  ONLINE
+  OFFLINE
+  ERROR
+  MAINTENANCE
+}
+
+enum DeviceCategory {
+  SENSOR
+  ACTUATOR
+  HVAC
+  LIGHTING
+}
+
+enum ConnectionStatus {
+  CONNECTED
+  DISCONNECTED
+  CONNECTING
+  ERROR
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+' Inheritance relationships
+BaseEntity <|-- BaseDevice
+BaseDevice <|-- Device
+BaseEntity <|-- DeviceType
+
+' Composition relationships
+DeviceManager "1" -- "0..*" Device : управляет
+
+' API Handler relationships
+DeviceAPIHandler "1" -- "1" DeviceManager : использует
+DeviceAPIHandler "1" -- "1" DeviceCommandProcessor : использует
+
+' Association relationships
+Device "1" -- "0..*" DeviceCommand : получает
+Device "1" -- "0..*" Connection : имеет
+Device "1" -- "1" DeviceType : является типом
+ConnectionHandler "1" -- "0..*" Connection : управляет
+DeviceAPIHandler "1" -- "0..*" DeviceRequest : обрабатывает
+DeviceAPIHandler "1" -- "0..*" DeviceResponse : генерирует
+DeviceCommandProcessor "1" -- "0..*" DeviceCommand : обрабатывает
+
+' Command flow through connections
+Connection "1" -- "0..*" DeviceCommand : передает
+DeviceCommandProcessor "1" -- "0..*" Connection : использует для выполнения
+
+' Request to Command transformation
+DeviceRequest "1" -- "1" DeviceCommand : преобразуется в
+DeviceAPIHandler "1" -- "0..*" DeviceCommand : создает из запроса
+
+' Command flow
+Device "1" -- "0..*" DeviceRequest : получает
+
+' Command execution feedback
+DeviceCommandProcessor "1" -- "1" DeviceAPIHandler : уведомляет о результате
+DeviceCommandProcessor "1" -- "1" ConnectionHandler : использует для соединений
+
+
+
+' Dependencies
+Device ..> DeviceStatus : использует
+Device ..> DeviceCategory : использует
+Connection ..> ConnectionStatus : использует
+DeviceCommand ..> Priority : использует
+DeviceCommandProcessor ..> DeviceType : проверяет тип
+
+' Notes for logical flow compatibility with sequence diagram
+note right of Device : "send_command() принимает параметр\nConnection"
+note right of DeviceAPIHandler : "Преобразует DeviceRequest в DeviceCommand\nи создает DeviceResponse из результата"
+note right of DeviceRequest : "API запрос преобразуется\nв команду устройства"
+note right of DeviceCommandProcessor : "Выполняет команду и возвращает\nрезультат (boolean + data)"
+
+@enduml
